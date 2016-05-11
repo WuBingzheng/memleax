@@ -240,15 +240,19 @@ int main(int argc, char * const *argv)
 
 		/* new thread or process? */
 		int pevent = status >> 16;
-		if (pevent == PTRACE_EVENT_CLONE) { /* thread */
+		if (pevent != 0) {
 			pid_t child = ptrace_get_child(pid);
-			log_debug("new thread id=%d\n", child);
 			waitpid(child, NULL, __WALL);
-			ptrace_continue(child, 0);
+			if (pevent == PTRACE_EVENT_CLONE) { /* thread */
+				log_debug("new thread id=%d\n", child);
+				ptrace_continue(child, 0);
+			} else { /* process, detach it */
+				log_debug("new process id=%d\n", child);
+				breakpoint_cleanup(child);
+				ptrace_detach(child, 0);
+			}
 			ptrace_continue(pid, 0);
 			continue;
-		}
-		if (pevent == PTRACE_EVENT_FORK || pevent == PTRACE_EVENT_VFORK) { /* process */
 		}
 
 		/* get registers */
