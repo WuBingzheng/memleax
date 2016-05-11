@@ -11,8 +11,8 @@ struct breakpoint_s {
 	intptr_t	entry_code;
 };
 
-void breakpoint_init(void);
-void breakpoint_cleanup(void);
+void breakpoint_init(pid_t pid);
+void breakpoint_cleanup(pid_t pid);
 struct breakpoint_s *breakpoint_by_entry(intptr_t address);
 
 #endif

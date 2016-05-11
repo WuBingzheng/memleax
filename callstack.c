@@ -19,7 +19,7 @@ static struct callstack_s g_callstacks[CALLSTACK_MAX];
 struct callstack_s *callstack_current(void)
 {
 	unw_word_t ips[BACKTRACE_MAX];
-	ips[0] = g_current_api_entry; /* push the API entry address */
+	ips[0] = g_current_entry; /* push the API entry address */
 	int ip_num = ptr_backtrace(ips + 1, opt_backtrace_limit - 1) + 1;
 
 	/* search */

@@ -7,42 +7,52 @@
 
 #include "memleax.h"
 
-static inline intptr_t ptrace_get_data(intptr_t address)
+static inline intptr_t ptrace_get_data(pid_t pid, intptr_t address)
 {
-	return ptrace(PTRACE_PEEKTEXT, g_target_pid, address, 0);
+	return ptrace(PTRACE_PEEKTEXT, pid, address, 0);
 }
-static inline void ptrace_set_data(intptr_t address, intptr_t data)
+static inline void ptrace_set_data(pid_t pid, intptr_t address, intptr_t data)
 {
-	ptrace(PTRACE_POKETEXT, g_target_pid, address, data);
+	ptrace(PTRACE_POKETEXT, pid, address, data);
 }
-static inline void ptrace_set_int3(intptr_t address, intptr_t code)
+static inline void ptrace_set_int3(pid_t pid, intptr_t address, intptr_t code)
 {
-	ptrace_set_data(address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
+	ptrace_set_data(pid, address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
 }
-static inline void ptrace_get_regs(struct user_regs_struct *regs)
+static inline void ptrace_get_regs(pid_t pid, struct user_regs_struct *regs)
 {
-	ptrace(PTRACE_GETREGS, g_target_pid, 0, regs);
+	ptrace(PTRACE_GETREGS, pid, 0, regs);
 }
-static inline void ptrace_set_regs(struct user_regs_struct *regs)
+static inline void ptrace_set_regs(pid_t pid, struct user_regs_struct *regs)
 {
-	ptrace(PTRACE_SETREGS, g_target_pid, 0, regs);
+	ptrace(PTRACE_SETREGS, pid, 0, regs);
 }
-
-static inline void ptrace_continue(int signum)
+static inline intptr_t ptrace_get_child(pid_t pid)
 {
-	ptrace(PTRACE_CONT, g_target_pid, 0, signum);
+	intptr_t child;
+	ptrace(PTRACE_GETEVENTMSG, pid, 0, &child);
+	return child;
 }
-
-static inline void ptrace_attach(void)
+static inline void ptrace_continue(pid_t pid, int signum)
 {
-	if (ptrace(PTRACE_ATTACH, g_target_pid, 0, 0) != 0) {
-		perror("attach process error:");
+	ptrace(PTRACE_CONT, pid, 0, signum);
+}
+static inline void ptrace_attach(pid_t pid)
+{
+	if (ptrace(PTRACE_ATTACH, pid, 0, 0) != 0) {
+		perror("== Attach process error:");
 		exit(4);
 	}
-	// ptrace(PTRACE_SETOPTIONS, g_target_pid, 0, PTRACE_O_TRACEEXIT); // TODO
 }
-static inline void ptrace_detach(int signum)
+static inline void ptrace_trace_child(pid_t pid)
 {
-	ptrace(PTRACE_DETACH, g_target_pid, 0, signum);
+	ptrace(PTRACE_SETOPTIONS, pid, 0,
+			PTRACE_O_TRACECLONE |
+			PTRACE_O_TRACEVFORK |
+			PTRACE_O_TRACEFORK);
+}
+static inline void ptrace_detach(pid_t pid, int signum)
+{
+	ptrace(PTRACE_DETACH, pid, 0, signum);
 }
 #endif

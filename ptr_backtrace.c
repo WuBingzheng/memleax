@@ -30,6 +30,7 @@ int ptr_maps_build(const char *path, intptr_t start, intptr_t end, int exe_self)
 	list_add_tail(&ms->list_node, &g_map_sections);
 
 	/* read */
+	/* XXX: should parse ELF */
 	int fd = open(path, O_RDONLY);
 	if (read(fd, ms->data, end - start) != end - start) {
 		return -1;
@@ -50,7 +51,7 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 			return 0;
 		}
 	}
-	*val = ptrace_get_data(addr);
+	*val = ptrace_get_data(g_current_thread, addr);
 	return 0;
 }
 static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_info_t *pi,
@@ -90,22 +91,62 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 	return ii->ret;
 }
 
+struct thread_space_s {
+	struct list_head	list_node;
+	unw_addr_space_t	uspace;
+	void			*upt_info;
+	pid_t			thread_id;
+};
 int ptr_backtrace(unw_word_t *ips, int size)
 {
-	static unw_addr_space_t uspace = NULL;
-	static void *upt_info = NULL;
+#define SPACE_MAX 10
+	static LIST_HEAD(space_head);
+	static struct thread_space_s spaces[SPACE_MAX];
 
-	/* unwind-ptrace init at first time */
-	if (uspace == NULL) {
+	/* init at first time */
+	if (list_empty(&space_head)) {
 		_UPT_accessors.access_mem = _ptr_access_mem;
 		_UPT_accessors.find_proc_info = _ptr_find_proc_info;
-		uspace = unw_create_addr_space(&_UPT_accessors, 0);
-		upt_info = _UPT_create(g_target_pid);
+
+		int i;
+		for (i = 0; i < SPACE_MAX; i++) {
+			list_add(&spaces[i].list_node, &space_head);
+		}
 	}
 
+	/* search current thread */
+	struct thread_space_s *sp = NULL;
+	struct list_head *p;
+	list_for_each(p, &space_head) {
+		sp = list_entry(p, struct thread_space_s, list_node);
+		if (sp->thread_id == 0) {
+			break;
+		}
+		if (sp->thread_id == g_current_thread) {
+			break;
+		}
+	}
+
+	/* if not found, create one */
+	if (sp->thread_id != g_current_thread) {
+		if (sp->thread_id != 0) { /* expire oldest */
+			unw_destroy_addr_space(sp->uspace);
+			_UPT_destroy(sp->upt_info);
+		}
+
+		sp->uspace = unw_create_addr_space(&_UPT_accessors, 0);
+		sp->upt_info = _UPT_create(g_current_thread);
+		sp->thread_id = g_current_thread;
+	}
+
+	/* update LRU */
+	list_del(&sp->list_node);
+	list_add(&sp->list_node, &space_head);
+
+	/* build backtrace */
 	int i = 0;
 	unw_cursor_t cursor;
-	unw_init_remote(&cursor, uspace, upt_info);
+	unw_init_remote(&cursor, sp->uspace, sp->upt_info);
 	do {
 		unw_get_reg(&cursor, UNW_REG_IP, &ips[i++]);
 	} while (i < size && unw_step(&cursor) > 0);

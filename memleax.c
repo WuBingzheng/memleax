@@ -16,9 +16,11 @@
 #include "symtab.h"
 #include "debug_line.h"
 
-pid_t g_target_pid;
-intptr_t g_current_api_entry;
+intptr_t g_current_entry;
+pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
+
+static pid_t g_target_pid;
 
 
 /* build symbol-table and debug-line of one file */
@@ -31,11 +33,11 @@ static void info_build_debug(int (*buildf)(const char*, intptr_t, intptr_t, int)
 	}
 
 	char debug_path[2048];
-	sprintf(debug_path, "/debug%s", path);
+	sprintf(debug_path, "/lib/debug%s", path);
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
-	sprintf(debug_path, "/usr/debug%s", path);
+	sprintf(debug_path, "/usr/lib/debug%s", path);
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
@@ -166,52 +168,82 @@ int main(int argc, char * const *argv)
 	/* prepare */
 	info_build(debug_info_file);
 
-	ptrace_attach();
+	ptrace_attach(g_target_pid);
 	wait(NULL);
+	ptrace_trace_child(g_target_pid);
 
-	breakpoint_init();
+	breakpoint_init(g_target_pid);
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
+	ptrace_continue(g_target_pid, 0);
+
 	/* begin work */
 	printf("== Begin monitoring process %d...\n", g_target_pid);
 	time_t begin = time(NULL);
-	int signum = 0;
 	struct breakpoint_s *bp = NULL;
 	intptr_t return_address = 0, return_code = 0;
 	intptr_t arg1 = 0, arg2 = 0;
-	while (1) {
-		/* continue target process */
-		ptrace_continue(signum);
+	pid_t last_thread = 0;
+	pid_t hold_threads[1000];
+	int hold_thread_num = 0;
 
+	while (1) {
 		/* wait for breakpoint */
 		int status;
-		wait(&status);
+		pid_t pid = waitpid(-1, &status, __WALL);
+		log_debug("wait: pid=%d status=%x\n", pid, status);
+		if (pid < 0) {
+			perror("\n== Error on waitpid()");
+			break;
+		}
 		if (!WIFSTOPPED(status)) {
+			if (pid != g_target_pid) {
+				continue;
+			}
 			printf("\n== Target process exit.\n");
 			break;
 		}
-		signum = WSTOPSIG(status);
+		int signum = WSTOPSIG(status);
 		if (signum == SIGSTOP) { /* by signal_handler() */
 			printf("\n== Stop monitoring after %ld seconds.\n", time(NULL) - begin);
-			signum = 0;
 			break;
 		}
-		if (signum != SIGTRAP) {
+		if (signum != SIGTRAP) { /* forward signals */
+			ptrace_continue(pid, signum);
 			continue;
 		}
-		signum = 0;
+
+		/* new thread or process? */
+		int pevent = status >> 16;
+		if (pevent == PTRACE_EVENT_CLONE) { /* thread */
+			pid_t child = ptrace_get_child(pid);
+			log_debug("new thread id=%d\n", child);
+			waitpid(child, NULL, __WALL);
+			ptrace_continue(child, 0);
+			ptrace_continue(pid, 0);
+			continue;
+		}
+		if (pevent == PTRACE_EVENT_FORK || pevent == PTRACE_EVENT_VFORK) { /* process */
+		}
 
 		/* get registers */
 		struct user_regs_struct regs;
-		ptrace_get_regs(&regs);
+		ptrace_get_regs(pid, &regs);
 
 		/* unwind the RIP back by 1 to let the CPU execute the
 		 * original instruction that was there. */
 		regs.rip -= 1;
-		ptrace_set_regs(&regs);
+		ptrace_set_regs(pid, &regs);
 		log_debug("\nbreak at: %llx\n", regs.rip);
+
+		/* another thread is in a function, so hold this one */
+		if (return_address != 0 && last_thread != pid) {
+			log_debug("hold thread: %d\n", pid);
+			hold_threads[hold_thread_num++] = pid;
+			continue;
+		}
 
 		/* breaking after a function-entry-breakpoint, which means
 		 * we are at the function-return-breakpoint, or at another
@@ -219,50 +251,63 @@ int main(int argc, char * const *argv)
 		 * the formor function-entry-breakpoint. */
 		if (return_address != 0) {
 			/* recover return code */
-			ptrace_set_data(return_address, return_code);
+			ptrace_set_data(pid, return_address, return_code);
 			/* re-set breakpoint at entry address */
-			ptrace_set_int3(bp->entry_address, bp->entry_code);
+			ptrace_set_int3(pid, bp->entry_address, bp->entry_code);
 		}
 
 		if (regs.rip == return_address) {
 			/* -- at function return */
 
+			/* set these for building backstrace far away */
+			g_current_entry = bp->entry_address;
+			g_current_thread = pid;
+
 			bp->handler(regs.rax, arg1, arg2);
 			return_address = 0;
+
+			/* wakeup hold-threads */
+			int i;
+			for (i = 0; i < hold_thread_num; i++) {
+				ptrace_continue(hold_threads[i], 0);
+				log_debug("wakeup thread: %d\n", hold_threads[i]);
+			}
+			hold_thread_num = 0;
 
 		} else if ((bp = breakpoint_by_entry(regs.rip)) != NULL) {
 			/* -- at function entry */
 
 			/* recover entry code */
-			ptrace_set_data(bp->entry_address, bp->entry_code);
+			ptrace_set_data(pid, bp->entry_address, bp->entry_code);
 
 			/* set breakpoint at return address */
-			return_address = ptrace_get_data(regs.rsp);
-			return_code = ptrace_get_data(return_address);
-			ptrace_set_int3(return_address, return_code);
+			return_address = ptrace_get_data(pid, regs.rsp);
+			return_code = ptrace_get_data(pid, return_address);
+			ptrace_set_int3(pid, return_address, return_code);
 
 			/* save arguments */
 			arg1 = regs.rdi;
 			arg2 = regs.rsi;
 
-			/* save this for build backstrace */
-			g_current_api_entry = regs.rip;
+			last_thread = pid;
 
 		} else {
 			printf("unknown breakpoint %llx\n", regs.rip);
 			break;
 		}
 
+		ptrace_continue(pid, 0);
+
 		memblock_expire(memory_expire);
 	}
 
 	/* clean up, entry and return point */
-	breakpoint_cleanup();
+	breakpoint_cleanup(g_target_pid);
 	if (return_address != 0) {
-		ptrace_set_data(return_address, return_code);
+		ptrace_set_data(g_target_pid, return_address, return_code);
 	}
 
-	ptrace_detach(signum);
+	ptrace_detach(g_target_pid, 0);
 
 	if (time(NULL) - begin >= memory_expire * 2) {
 		printf("== Callstack statistics:\n\n");

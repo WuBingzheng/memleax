@@ -51,7 +51,7 @@ static void bph_calloc(intptr_t pointer, intptr_t nmemb, intptr_t size)
 }
 
 
-static void do_breakpoint_init(struct breakpoint_s *bp,
+static void do_breakpoint_init(pid_t pid, struct breakpoint_s *bp,
 		const char *name, bp_handler_f handler)
 {
 	bp->name = name;
@@ -63,26 +63,26 @@ static void do_breakpoint_init(struct breakpoint_s *bp,
 	}
 
 	/* read original code */
-	bp->entry_code = ptrace_get_data(bp->entry_address);
+	bp->entry_code = ptrace_get_data(pid, bp->entry_address);
 
 	/* write the trap instruction 'int 3' into the address */
-	ptrace_set_int3(bp->entry_address, bp->entry_code);
+	ptrace_set_int3(pid, bp->entry_address, bp->entry_code);
 }
 
-void breakpoint_init(void)
+void breakpoint_init(pid_t pid)
 {
-	do_breakpoint_init(&g_breakpoints[0], "malloc", bph_malloc);
-	do_breakpoint_init(&g_breakpoints[1], "free", bph_free);
-	do_breakpoint_init(&g_breakpoints[2], "realloc", bph_realloc);
-	do_breakpoint_init(&g_breakpoints[3], "calloc", bph_calloc);
+	do_breakpoint_init(pid, &g_breakpoints[0], "malloc", bph_malloc);
+	do_breakpoint_init(pid, &g_breakpoints[1], "free", bph_free);
+	do_breakpoint_init(pid, &g_breakpoints[2], "realloc", bph_realloc);
+	do_breakpoint_init(pid, &g_breakpoints[3], "calloc", bph_calloc);
 }
 
-void breakpoint_cleanup(void)
+void breakpoint_cleanup(pid_t pid)
 {
 	int i;
 	for (i = 0; i < 4; i++) {
 		struct breakpoint_s *bp = &g_breakpoints[i];
-		ptrace_set_data(bp->entry_address, bp->entry_code);
+		ptrace_set_data(pid, bp->entry_address, bp->entry_code);
 	}
 }
 
