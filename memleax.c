@@ -9,6 +9,7 @@
 #include <sys/user.h>
 #include <string.h>
 #include <signal.h>
+#include <dirent.h>
 
 #include "breakpoint.h"
 #include "ptrace_utils.h"
@@ -97,7 +98,35 @@ static void info_build(const char *debug_info_file)
 	debug_line_build_finish();
 }
 
-void signal_handler(int signo)
+/* attach all existing threads */
+static void attach_threads(void)
+{
+	char tname[30];
+	sprintf(tname, "/proc/%d/task", g_target_pid);
+	DIR *dirp = opendir(tname);
+
+	pid_t pid;
+	struct dirent *e;
+	while ((e = readdir(dirp)) != NULL) {
+		pid = atoi(e->d_name);
+
+		if (pid == 0) continue;
+
+		ptrace_attach(pid);
+		waitpid(pid, NULL, __WALL);
+		ptrace_trace_child(pid);
+
+		if (pid == g_target_pid) { /* set br only once */
+			breakpoint_init(g_target_pid);
+		}
+
+		ptrace_continue(pid, 0);
+	}
+
+	closedir(dirp);
+}
+
+static void signal_handler(int signo)
 {
 	kill(g_target_pid, SIGSTOP);
 }
@@ -168,16 +197,10 @@ int main(int argc, char * const *argv)
 	/* prepare */
 	info_build(debug_info_file);
 
-	ptrace_attach(g_target_pid);
-	wait(NULL);
-	ptrace_trace_child(g_target_pid);
-
-	breakpoint_init(g_target_pid);
+	attach_threads();
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
-
-	ptrace_continue(g_target_pid, 0);
 
 	/* begin work */
 	printf("== Begin monitoring process %d...\n", g_target_pid);
