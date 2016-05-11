@@ -84,8 +84,8 @@ static int callstack_cmp(const void *a, const void *b)
 	const struct callstack_s *csa = a;
 	const struct callstack_s *csb = b;
 
-	return (csb->expired_count - csb->free_expired_count)
-			- (csa->expired_count - csa->free_expired_count);
+	return (csa->expired_count - csa->free_expired_count)
+			- (csb->expired_count - csb->free_expired_count);
 }
 void callstack_report(void)
 {

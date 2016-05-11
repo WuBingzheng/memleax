@@ -333,7 +333,7 @@ int main(int argc, char * const *argv)
 	ptrace_detach(g_target_pid, 0);
 
 	if (time(NULL) - begin >= memory_expire * 2) {
-		printf("== Callstack statistics:\n\n");
+		printf("== Callstack statistics: (in ascending order)\n\n");
 		callstack_report();
 	} else {
 		printf("== Monitor %ld seconds at least for statistics.\n",
