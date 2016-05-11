@@ -1,28 +1,28 @@
-# memleax
+## memleax
 
 `memleax` detects memory leak of a running process.
 
 
-# environment
+## environment
 
 Linux, x86_64
 
 
-# dependence
+## dependence
 
 * libunwind
 * libdwarf
 * elfutils-libelf
 
 
-# how it works
+## how it works
 
 `memleax` attachs a running process, hooks memory allocate/free APIs,
 and reports the memory blocks that live longer than an appointed
 time.
 
 
-# difference from Valgrind
+## difference from Valgrind
 
 * `Valgrind` starts target process, while `memleax` attachs a running process;
 
@@ -32,14 +32,16 @@ that long-living memory blocks are leaks, so it reports in real time;
 * `Valgrind` runs target process on its virtual CPU, which makes it slow.
 While `memleax` hooks memory APIs, which is less slow.
 
-* Of course, `Valgrind` is much more power, while `memleax` is lightweight.
+* Of course, `Valgrind` is much more powerful, while `memleax` is lightweight,
+and only detects memory leak.
 
-In summary, I think `Valgrind` is more power, but `memleax` is more suitable
-for online production environment.
+In summary, I think `Valgrind` is more powerful, while `memleax` is more suitable
+for online production environment. `memleax` gives memory leak report without
+restarting target process.
 
 
-# usage
+## usage
 
 To detect a running process:
 
-    memleax [options] <target-process-id>
+    $ memleax [options] <target-pid>
