@@ -64,27 +64,20 @@ int debug_line_build(const char *path, intptr_t start, intptr_t end, int exe_sel
 
 	Dwarf_Debug dbg;
 	Dwarf_Error error;
-	Dwarf_Handler errhand = 0;
-	Dwarf_Ptr errarg = 0;
 	int count = 0;
 
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		return -1;
 	}
-	int res = dwarf_init(fd, DW_DLC_READ, errhand, errarg, &dbg, &error);
+	int res = dwarf_init(fd, DW_DLC_READ, 0, 0, &dbg, &error);
 	if(res != DW_DLV_OK) {
 		return -1;
 	}
 
-	Dwarf_Unsigned cu_header_length = 0;
-	Dwarf_Unsigned abbrev_offset = 0;
-	Dwarf_Half version_stamp = 0;
-	Dwarf_Half address_size = 0;
 	Dwarf_Die cu_die = 0;
 	Dwarf_Unsigned next_cu_offset = 0;
-	while (dwarf_next_cu_header(dbg, &cu_header_length, &version_stamp,
-				&abbrev_offset, &address_size,
+	while (dwarf_next_cu_header(dbg, NULL, NULL, NULL, NULL,
 				&next_cu_offset, &error) == DW_DLV_OK) {
 
 		if (dwarf_siblingof(dbg, NULL, &cu_die, &error) != DW_DLV_OK) {

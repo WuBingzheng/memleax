@@ -97,7 +97,7 @@ void callstack_report(void)
 	for (i = 0; i < g_callstack_num; i++) {
 		struct callstack_s *cs = &g_callstacks[i];
 		if (cs->expired_count == cs->free_expired_count) {
-			break;
+			continue;
 		}
 
 		printf("CallStack[%d]: may-leak=%d (%d bytes)\n"

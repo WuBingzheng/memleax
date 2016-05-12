@@ -34,11 +34,11 @@ static void info_build_debug(int (*buildf)(const char*, intptr_t, intptr_t, int)
 	}
 
 	char debug_path[2048];
-	sprintf(debug_path, "/lib/debug%s", path);
+	sprintf(debug_path, "/lib/debug%s.debug", path);
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
-	sprintf(debug_path, "/usr/lib/debug%s", path);
+	sprintf(debug_path, "/usr/lib/debug%s.debug", path);
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
@@ -80,15 +80,15 @@ static void info_build(const char *debug_info_file)
 		if (perms[2] == 'x' && path[0] == '/') {
 			int exe_self = (strcmp(exe_name, path) == 0);
 
+			info_build_debug(ptr_maps_build, "maps",
+					path, start, end, exe_self);
+
 			if (exe_self && debug_info_file) {
 				strcpy(path, debug_info_file);
 			}
-
 			info_build_debug(symtab_build, "symbol table",
 					path, start, end, exe_self);
 			info_build_debug(debug_line_build, "debug line",
-					path, start, end, exe_self);
-			info_build_debug(ptr_maps_build, "maps",
 					path, start, end, exe_self);
 		}
 	}
