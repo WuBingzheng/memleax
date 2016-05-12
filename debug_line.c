@@ -75,11 +75,11 @@ int debug_line_build(const char *path, intptr_t start, intptr_t end, int exe_sel
 		return -1;
 	}
 
-	Dwarf_Die cu_die = 0;
 	Dwarf_Unsigned next_cu_offset = 0;
 	while (dwarf_next_cu_header(dbg, NULL, NULL, NULL, NULL,
 				&next_cu_offset, &error) == DW_DLV_OK) {
 
+		Dwarf_Die cu_die = 0;
 		if (dwarf_siblingof(dbg, NULL, &cu_die, &error) != DW_DLV_OK) {
 			printf("dwarf_siblingof\n");
 			exit(1);
@@ -89,11 +89,11 @@ int debug_line_build(const char *path, intptr_t start, intptr_t end, int exe_sel
 		Dwarf_Line *linebuf = NULL;
 		res = dwarf_srclines(cu_die, &linebuf, &linecount, &error);
 		if (res == DW_DLV_ERROR) {
-			printf("dwarf_srclines\n");
-			exit(1);
+			printf("warning: dwarf_srclines() error: %s\n", dwarf_errmsg(error));
+			break;
 		}
 		if (res == DW_DLV_NO_ENTRY) {
-			break;
+			continue;
 		}
 
 		Dwarf_Addr pc;
@@ -110,6 +110,7 @@ int debug_line_build(const char *path, intptr_t start, intptr_t end, int exe_sel
 		}
 
 		dwarf_srclines_dealloc(dbg, linebuf, linecount);
+		dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
 	}
 
 	dwarf_finish(dbg,&error);

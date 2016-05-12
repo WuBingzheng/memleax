@@ -177,7 +177,7 @@ int main(int argc, char * const *argv)
 			printf("%s", help);
 			return 0;
 		case 'v':
-			printf("%s\n", "1.0");
+			printf("%s\n", "0.1");
 			return 0;
 		default:
 			printf("%s", help);
