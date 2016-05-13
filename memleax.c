@@ -319,8 +319,13 @@ int main(int argc, char * const *argv)
 			last_thread = pid;
 
 		} else {
-			printf("unknown breakpoint %llx\n", regs.rip);
-			break;
+			/* maybe other thread met a return-breakpoint which
+			 * is recoverd already */
+			intptr_t code = ptrace_get_data(pid, regs.rip);
+			if ((code & 0xFF) == 0xCC) {
+				printf("unknown breakpoint %llx\n", regs.rip);
+				break;
+			}
 		}
 
 		ptrace_continue(pid, 0);
