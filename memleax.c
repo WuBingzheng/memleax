@@ -178,7 +178,8 @@ int main(int argc, char * const *argv)
 			printf("%s", help);
 			return 0;
 		case 'v':
-			printf("%s\n", "0.1");
+			printf("Version: 0.1\n");
+			printf("Author: Wu Bingzheng\n");
 			return 0;
 		default:
 			printf("%s", help);
