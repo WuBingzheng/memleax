@@ -53,7 +53,7 @@ const char *callstack_string(struct callstack_s *cs)
 	char buffer[10000], *p = buffer;
 	int offset, lineno, i;
 	for (i = 0; i < cs->ip_num; i++) {
-		intptr_t address = cs->ips[i];
+		uintptr_t address = cs->ips[i];
 		p += sprintf(p, "    0x%016lx", address);
 
 		const char *proc_name = symtab_by_address(address, &offset);

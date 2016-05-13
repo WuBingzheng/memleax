@@ -12,7 +12,7 @@ static struct hlist_head g_memblock_hash[HASH_SIZE];
 static LIST_HEAD(g_memblock_active);
 static LIST_HEAD(g_memblock_expire);
 
-struct memblock_s *memblock_new(intptr_t pointer, size_t size)
+struct memblock_s *memblock_new(uintptr_t pointer, size_t size)
 {
 	if (pointer == 0) {
 		printf("Warning: alloc returns NULL at\n%s",
@@ -27,7 +27,7 @@ struct memblock_s *memblock_new(intptr_t pointer, size_t size)
 	mb->create = time(NULL);
 	mb->expired = 0;
 
-	hash_add(g_memblock_hash, &mb->hash_node, sizeof(intptr_t));
+	hash_add(g_memblock_hash, &mb->hash_node, sizeof(uintptr_t));
 	list_add_tail(&mb->list_node, &g_memblock_active);
 
 	mb->callstack->alloc_count++;
@@ -69,10 +69,10 @@ void memblock_delete(struct memblock_s *mb)
 	free(mb);
 }
 
-struct memblock_s *memblock_search(intptr_t pointer)
+struct memblock_s *memblock_search(uintptr_t pointer)
 {
 	struct hlist_node *p = hash_search(g_memblock_hash,
-			&pointer, sizeof(intptr_t));
+			&pointer, sizeof(uintptr_t));
 	if (p == NULL) {
 		return NULL;
 	}

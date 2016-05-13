@@ -17,11 +17,11 @@
 static LIST_HEAD(g_map_sections);
 struct map_section_s {
 	struct list_head	list_node;
-	intptr_t		start, end;
+	uintptr_t		start, end;
 	unw_word_t		data[0];
 };
 
-int ptr_maps_build(const char *path, intptr_t start, intptr_t end, int exe_self)
+int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
 	/* create map-section */
 	struct map_section_s *ms = calloc(1, sizeof(struct map_section_s) + end - start);

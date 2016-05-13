@@ -3,7 +3,7 @@
 
 #include <libunwind-ptrace.h>
 
-int ptr_maps_build(const char *path, intptr_t start, intptr_t end, int exe_self);
+int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_self);
 int ptr_backtrace(unw_word_t *ips, int size);
 
 #endif

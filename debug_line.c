@@ -12,7 +12,7 @@
 #define DEBUGLINE_MAX 500000
 static int g_debug_line_num = 0;
 static struct debug_line_s {
-	intptr_t	address;
+	uintptr_t	address;
 	int		lineno;
 	int		fileno;
 } g_debug_lines[DEBUGLINE_MAX];
@@ -24,7 +24,7 @@ static int g_filename_num = 0;
 #define DEBUGREGION_MAX 100
 static int g_address_region_num = 0;
 static struct address_region_s {
-	intptr_t	start, end;
+	uintptr_t	start, end;
 } g_address_regions[DEBUGREGION_MAX];
 
 
@@ -58,9 +58,9 @@ static void debug_line_new(Dwarf_Addr pc, Dwarf_Unsigned lineno, const char *fil
 	dl->fileno = i;
 }
 
-int debug_line_build(const char *path, intptr_t start, intptr_t end, int exe_self)
+int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
-	intptr_t offset = exe_self ? 0 : start;
+	uintptr_t offset = exe_self ? 0 : start;
 
 	Dwarf_Debug dbg;
 	Dwarf_Error error;
@@ -137,7 +137,7 @@ void debug_line_build_finish(void)
 			sizeof(struct debug_line_s), debug_line_cmp);
 }
 
-const char *debug_line_search(intptr_t address, int *lineno)
+const char *debug_line_search(uintptr_t address, int *lineno)
 {
 	/* check in address region? */
 	int i;

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -17,7 +18,7 @@
 #include "symtab.h"
 #include "debug_line.h"
 
-intptr_t g_current_entry;
+uintptr_t g_current_entry;
 pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
 
@@ -25,9 +26,9 @@ static pid_t g_target_pid;
 
 
 /* build symbol-table and debug-line of one file */
-static void info_build_debug(int (*buildf)(const char*, intptr_t, intptr_t, int),
+static void info_build_debug(int (*buildf)(const char*, uintptr_t, uintptr_t, int),
 		const char *name, const char *path,
-		intptr_t start, intptr_t end, int exe_self)
+		uintptr_t start, uintptr_t end, int exe_self)
 {
 	if (buildf(path, start, end, exe_self) > 0) {
 		return;
@@ -70,7 +71,7 @@ static void info_build(const char *debug_info_file)
 	}
 
 	char line[1024];
-	intptr_t start, end;
+	uintptr_t start, end;
 	char perms[5], path[1024];
 	int ia, ib, ic, id;
 	while(fgets(line, sizeof(line), maps) != NULL) {
@@ -206,8 +207,8 @@ int main(int argc, char * const *argv)
 	printf("== Begin monitoring process %d...\n", g_target_pid);
 	time_t begin = time(NULL);
 	struct breakpoint_s *bp = NULL;
-	intptr_t return_address = 0, return_code = 0;
-	intptr_t arg1 = 0, arg2 = 0;
+	uintptr_t return_address = 0, return_code = 0;
+	uintptr_t arg1 = 0, arg2 = 0;
 	pid_t last_thread = 0;
 	pid_t hold_threads[1000];
 	int hold_thread_num = 0;
@@ -319,7 +320,7 @@ int main(int argc, char * const *argv)
 		} else {
 			/* maybe other thread met a return-breakpoint which
 			 * is recoverd already */
-			intptr_t code = ptrace_get_data(pid, regs.rip);
+			uintptr_t code = ptrace_get_data(pid, regs.rip);
 			if ((code & 0xFF) == 0xCC) {
 				printf("unknown breakpoint %llx\n", regs.rip);
 				break;

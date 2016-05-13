@@ -7,15 +7,15 @@
 
 #include "memleax.h"
 
-static inline intptr_t ptrace_get_data(pid_t pid, intptr_t address)
+static inline uintptr_t ptrace_get_data(pid_t pid, uintptr_t address)
 {
 	return ptrace(PTRACE_PEEKTEXT, pid, address, 0);
 }
-static inline void ptrace_set_data(pid_t pid, intptr_t address, intptr_t data)
+static inline void ptrace_set_data(pid_t pid, uintptr_t address, uintptr_t data)
 {
 	ptrace(PTRACE_POKETEXT, pid, address, data);
 }
-static inline void ptrace_set_int3(pid_t pid, intptr_t address, intptr_t code)
+static inline void ptrace_set_int3(pid_t pid, uintptr_t address, uintptr_t code)
 {
 	ptrace_set_data(pid, address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
 }
@@ -27,9 +27,9 @@ static inline void ptrace_set_regs(pid_t pid, struct user_regs_struct *regs)
 {
 	ptrace(PTRACE_SETREGS, pid, 0, regs);
 }
-static inline intptr_t ptrace_get_child(pid_t pid)
+static inline uintptr_t ptrace_get_child(pid_t pid)
 {
-	intptr_t child;
+	uintptr_t child;
 	ptrace(PTRACE_GETEVENTMSG, pid, 0, &child);
 	return child;
 }

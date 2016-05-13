@@ -16,14 +16,14 @@
 #define SYMBOL_MAX 100000
 static int g_symtab_num = 0;
 static struct symbol_s {
-       intptr_t        address;
+       uintptr_t        address;
        size_t          size;
        int             weak;
        const char      *name;
 } g_symbol_table[SYMBOL_MAX];
 
 
-static void symbol_new(const char *name, intptr_t address, size_t size, int weak)
+static void symbol_new(const char *name, uintptr_t address, size_t size, int weak)
 {
 	static char sym_name_buf[SYMBOL_MAX * 20];
 	static char *sym_name_pos = sym_name_buf;
@@ -43,9 +43,9 @@ static void symbol_new(const char *name, intptr_t address, size_t size, int weak
 	sym_name_pos += strlen(name) + 1;
 }
 
-int symtab_build(const char *path, intptr_t start, intptr_t end, int exe_self)
+int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
-	intptr_t offset = exe_self ? 0 : start;
+	uintptr_t offset = exe_self ? 0 : start;
 	int sh_type = exe_self ? SHT_SYMTAB : SHT_DYNSYM;
 
 	/* open file */
@@ -108,7 +108,7 @@ void symtab_build_finish(void)
 	qsort(g_symbol_table, g_symtab_num, sizeof(struct symbol_s), symbol_cmp);
 }
 
-const char *symtab_by_address(intptr_t address, int *offset)
+const char *symtab_by_address(uintptr_t address, int *offset)
 {
 	int min = 0, max = g_symtab_num - 1;
 	while (min <= max) {
@@ -126,10 +126,10 @@ const char *symtab_by_address(intptr_t address, int *offset)
 	return NULL;
 }
 
-intptr_t symtab_by_name(const char *name)
+uintptr_t symtab_by_name(const char *name)
 {
 	int i;
-	intptr_t address = NULL;
+	uintptr_t address = NULL;
 	for (i = 0; i < g_symtab_num; i++) {
 		if (strcmp(g_symbol_table[i].name, name) == 0) {
 			if (!g_symbol_table[i].weak) {

@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-int symtab_build(const char *path, intptr_t start, intptr_t end, int exe_self);
+int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self);
 void symtab_build_finish(void);
 
-const char *symtab_by_address(intptr_t address, int *offset);
-intptr_t symtab_by_name(const char *name);
+const char *symtab_by_address(uintptr_t address, int *offset);
+uintptr_t symtab_by_name(const char *name);
 
 #endif
