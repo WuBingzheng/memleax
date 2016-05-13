@@ -36,8 +36,7 @@ While `memleax` hooks memory APIs, which is less slow.
 and only detects memory leak.
 
 In summary, I think `Valgrind` is more powerful, while `memleax` is more suitable
-for online production environment. `memleax` gives memory leak report without
-restarting target process.
+for production environment.
 
 
 ## usage
