@@ -293,13 +293,11 @@ int main(int argc, char * const *argv)
 			bp->handler(regs.rax, arg1, arg2);
 			return_address = 0;
 
-			/* wakeup hold-threads */
-			int i;
-			for (i = 0; i < hold_thread_num; i++) {
-				ptrace_continue(hold_threads[i], 0);
-				log_debug("wakeup thread: %d\n", hold_threads[i]);
+			/* wakeup one hold-thread */
+			if (hold_thread_num != 0) {
+				ptrace_continue(hold_threads[hold_thread_num--], 0);
+				log_debug("wakeup thread: %d\n", hold_threads[hold_thread_num]);
 			}
-			hold_thread_num = 0;
 
 		} else if ((bp = breakpoint_by_entry(regs.rip)) != NULL) {
 			/* -- at function entry */
