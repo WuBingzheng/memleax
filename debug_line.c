@@ -36,10 +36,12 @@ static void debug_line_new(Dwarf_Addr pc, Dwarf_Unsigned lineno, const char *fil
 		dl->filename = fname_cache1;
 	} else if (strcmp(filename, fname_cache2) == 0) {
 		dl->filename = fname_cache2;
+		char *tmp = fname_cache1;
+		fname_cache1 = fname_cache2;
+		fname_cache2 = tmp;
 	} else {
 		dl->filename = strdup(filename);
-		fname_cache2 = fname_cache1;
-		fname_cache1 = dl->filename;
+		fname_cache2 = dl->filename;
 	}
 }
 
