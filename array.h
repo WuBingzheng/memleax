@@ -34,4 +34,12 @@ static inline void array_sort(struct array_s *a, int (*compar)(const void *, con
 	qsort(a->data, a->item_num, a->item_size, compar);
 }
 
+static inline void *array_last(struct array_s *a)
+{
+	if (a->item_num == 0) {
+		return NULL;
+	}
+	return (char *)a->data + (a->item_size * (a->item_num-1));
+}
+
 #endif

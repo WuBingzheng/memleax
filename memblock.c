@@ -103,7 +103,7 @@ static void memblock_expire_one(struct memblock_s *mb)
 	list_add_tail(&mb->list_node, &g_memblock_expire);
 }
 
-void memblock_expire(time_t expire)
+int memblock_expire(time_t expire, int stop_number)
 {
 	time_t now = time(NULL);
 	struct list_head *p, *safe;
@@ -115,7 +115,12 @@ void memblock_expire(time_t expire)
 		}
 
 		memblock_expire_one(mb);
+		if (mb->callstack->expired_count >= stop_number) {
+			return 1;
+		}
 	}
+
+	return 0;
 }
 
 void memblock_count(void)

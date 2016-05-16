@@ -132,6 +132,7 @@ int main(int argc, char * const *argv)
 {
 	const char *debug_info_file = NULL;
 	time_t memory_expire = 5;
+	int stop_number = 1000;
 
 	char *help = "Usage: memleax [options] target-pid\n"
 			"Options:\n"
@@ -139,6 +140,9 @@ int main(int argc, char * const *argv)
 			"      set memory free expire time, default is 5 seconds.\n"
 			"  -d <debug-info-file>\n"
 			"      set debug-info file.\n"
+			"  -n <stop-number>\n"
+			"      stop monitoring if number of expired memory block\n"
+			"      of a CallStack exceeds this one. default is 1000.\n"
 			"  -l <backtrace-limit>\n"
 			"      set backtrace deep limit. less backtrace, better\n"
 			"      performace. max is 50, and default is max.\n"
@@ -147,7 +151,7 @@ int main(int argc, char * const *argv)
 
 	/* parse options */
 	int ch;
-	while((ch = getopt(argc, argv, "hve:d:l:")) != -1) {
+	while((ch = getopt(argc, argv, "hve:d:l:n:")) != -1) {
 		switch(ch) {
 		case 'e':
 			memory_expire = atoi(optarg);
@@ -167,6 +171,13 @@ int main(int argc, char * const *argv)
 			}
 			if (opt_backtrace_limit > BACKTRACE_MAX) {
 				printf("too big backtrace limit: %s\n", optarg);
+				return 1;
+			}
+			break;
+		case 'n':
+			stop_number = atoi(optarg);
+			if (stop_number == 0) {
+				printf("invalid stop_number: %s\n", optarg);
 				return 1;
 			}
 			break;
@@ -230,7 +241,7 @@ int main(int argc, char * const *argv)
 		}
 		int signum = WSTOPSIG(status);
 		if (signum == SIGSTOP) { /* by signal_handler() */
-			printf("\n== Stop monitoring after %ld seconds.\n", time(NULL) - begin);
+			printf("\n== Terminate monitoring.\n");
 			break;
 		}
 		if (signum != SIGTRAP) { /* forward signals */
@@ -328,7 +339,10 @@ int main(int argc, char * const *argv)
 
 		ptrace_continue(pid, 0);
 
-		memblock_expire(memory_expire);
+		if (memblock_expire(memory_expire, stop_number) != 0) {
+			printf("\n== %d expired memory blocks of one CallStack.\n", stop_number);
+			break;
+		}
 	}
 
 	/* clean up, entry and return point */
@@ -339,12 +353,12 @@ int main(int argc, char * const *argv)
 
 	ptrace_detach(g_target_pid, 0);
 
-	if (time(NULL) - begin >= memory_expire * 2) {
-		printf("== Callstack statistics: (in ascending order)\n\n");
-		callstack_report();
-	} else {
-		printf("== Monitor %ld seconds at least for statistics.\n",
-				memory_expire * 2);
+	if (time(NULL) - begin <= memory_expire) {
+		printf("== Your monitoring time is too short. "
+				"%ld seconds is need.\n", memory_expire);
+		return 2;
 	}
+
+	callstack_report();
 	return 0;
 }

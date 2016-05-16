@@ -90,7 +90,13 @@ void callstack_report(void)
 	memblock_count();
 	array_sort(&g_callstacks, callstack_cmp);
 
-	struct callstack_s *cs;
+	struct callstack_s *cs = array_last(&g_callstacks);
+	if (cs == NULL || cs->expired_count == 0) {
+		printf("== No expired memory blocks.\n\n");
+		return;
+	}
+
+	printf("== Callstack statistics: (in ascending order)\n\n");
 	array_for_each(cs, &g_callstacks) {
 		if (cs->expired_count == cs->free_expired_count) {
 			continue;
