@@ -23,6 +23,11 @@ struct map_section_s {
 
 int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
+	/* finish */
+	if (path == NULL) {
+		return 0;
+	}
+
 	/* create map-section */
 	struct map_section_s *ms = calloc(1, sizeof(struct map_section_s) + end - start);
 	ms->start = start;

@@ -5,61 +5,58 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "memleax.h"
+#include "array.h"
 
-#define DEBUGLINE_MAX 500000
-static int g_debug_line_num = 0;
-static struct debug_line_s {
+struct debug_line_s {
 	uintptr_t	address;
+	char		*filename;
 	int		lineno;
-	int		fileno;
-} g_debug_lines[DEBUGLINE_MAX];
+};
+static ARRAY(g_debug_lines, struct debug_line_s, 1000);
 
-#define DEBUGFILES_MAX 5000
-static char *g_filenames[DEBUGFILES_MAX];
-static int g_filename_num = 0;
-
-#define DEBUGREGION_MAX 100
-static int g_address_region_num = 0;
-static struct address_region_s {
-	uintptr_t	start, end;
-} g_address_regions[DEBUGREGION_MAX];
+struct address_region_s {
+	uintptr_t	start;
+	uintptr_t	end;
+};
+static ARRAY(g_address_regions, struct address_region_s, 100);
 
 
 static void debug_line_new(Dwarf_Addr pc, Dwarf_Unsigned lineno, const char *filename)
 {
-	if (g_debug_line_num == DEBUGLINE_MAX) {
-		printf("error: too many debug-line entry\n");
-		exit(3);
-	}
-	if (g_filename_num == DEBUGFILES_MAX) {
-		printf("error: too many files in debug-line\n");
-		exit(3);
-	}
-
-	int i = g_filename_num - 1;
-	while (i >= 0) {
-		if (strcmp(filename, g_filenames[i]) == 0) {
-			break;
-		}
-		i--;
-	}
-	if (i < 0) {
-		i = g_filename_num++;
-		g_filenames[i] = malloc(strlen(filename) + 1);
-		strcpy(g_filenames[i], filename);
-	}
-
-	struct debug_line_s *dl = &g_debug_lines[g_debug_line_num++];
+	struct debug_line_s *dl = array_push(&g_debug_lines);
 	dl->address = pc;
 	dl->lineno = lineno;
-	dl->fileno = i;
+
+	static char *fname_cache1 = "";
+	static char *fname_cache2 = "";
+	if (strcmp(filename, fname_cache1) == 0) {
+		dl->filename = fname_cache1;
+	} else if (strcmp(filename, fname_cache2) == 0) {
+		dl->filename = fname_cache2;
+	} else {
+		dl->filename = strdup(filename);
+		fname_cache2 = fname_cache1;
+		fname_cache1 = dl->filename;
+	}
 }
 
+static int debug_line_cmp(const void *a, const void *b)
+{
+	const struct debug_line_s *dla = a;
+	const struct debug_line_s *dlb = b;
+	return dla->address < dlb->address ? -1 : 1;
+}
 int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
+	/* finish */
+	if (path == NULL) {
+		array_sort(&g_debug_lines, debug_line_cmp);
+		return 0;
+	}
+
 	uintptr_t offset = exe_self ? 0 : start;
 
 	Dwarf_Debug dbg;
@@ -117,7 +114,7 @@ int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_s
 	close(fd);
 
 	if (count > 0) {
-		struct address_region_s *ar = &g_address_regions[g_address_region_num++];
+		struct address_region_s *ar = array_push(&g_address_regions);
 		ar->start = start;
 		ar->end = end;
 	}
@@ -125,38 +122,26 @@ int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_s
 	return count;
 }
 
-static int debug_line_cmp(const void *a, const void *b)
-{
-	const struct debug_line_s *dla = a;
-	const struct debug_line_s *dlb = b;
-	return dla->address < dlb->address ? -1 : 1;
-}
-void debug_line_build_finish(void)
-{
-	qsort(g_debug_lines, g_debug_line_num,
-			sizeof(struct debug_line_s), debug_line_cmp);
-}
-
 const char *debug_line_search(uintptr_t address, int *lineno)
 {
 	/* check in address region? */
-	int i;
-	for (i = 0; i < g_address_region_num; i++) {
-		struct address_region_s *ar = &g_address_regions[i];
+	struct address_region_s *ar;
+	array_for_each(ar, &g_address_regions) {
 		if (address >= ar->start && address <= ar->end) {
 			break;
 		}
 	}
-	if (i == g_address_region_num) {
+	if (array_out(ar, &g_address_regions)) {
 		return NULL;
 	}
 
 	/* search */
-	int min = 0, max = g_debug_line_num - 2;
+	struct debug_line_s *lines = g_debug_lines.data;
+	int min = 0, max = g_debug_lines.item_num - 2;
 	while (min <= max) {
 		int mid = (min + max) / 2;
-		struct debug_line_s *dl = &g_debug_lines[mid];
-		struct debug_line_s *next = &g_debug_lines[mid+1];
+		struct debug_line_s *dl = &lines[mid];
+		struct debug_line_s *next = &lines[mid+1];
 
 		if (address < dl->address) {
 			max = mid - 1;
@@ -164,7 +149,7 @@ const char *debug_line_search(uintptr_t address, int *lineno)
 			min = mid + 1;
 		} else {
 			*lineno = dl->lineno;
-			return g_filenames[dl->fileno];
+			return dl->filename;
 		}
 	}
 

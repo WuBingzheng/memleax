@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "hash.h"
+#include "array.h"
 #include "symtab.h"
 #include "callstack.h"
 #include "ptr_backtrace.h"
@@ -11,10 +12,7 @@
 #include "memblock.h"
 
 static struct hlist_head g_callstack_hash[HASH_SIZE];
-
-#define CALLSTACK_MAX 10000
-static int g_callstack_num = 0;
-static struct callstack_s g_callstacks[CALLSTACK_MAX];
+static ARRAY(g_callstacks, struct callstack_s, 1000);
 
 struct callstack_s *callstack_current(void)
 {
@@ -30,11 +28,7 @@ struct callstack_s *callstack_current(void)
 	}
 
 	/* not found, create new one */
-	if (g_callstack_num == CALLSTACK_MAX) {
-		printf("error: too many callstacks\n");
-		exit(3);
-	}
-	struct callstack_s *cs = &g_callstacks[g_callstack_num++];
+	struct callstack_s *cs = array_push(&g_callstacks);
 	bzero(cs, sizeof(struct callstack_s));
 
 	memcpy(cs->ips, ips, sizeof(unw_word_t) * ip_num);
@@ -94,12 +88,10 @@ static int callstack_cmp(const void *a, const void *b)
 void callstack_report(void)
 {
 	memblock_count();
-	qsort(g_callstacks, g_callstack_num,
-			sizeof(struct callstack_s), callstack_cmp);
+	array_sort(&g_callstacks, callstack_cmp);
 
-	int i;
-	for (i = 0; i < g_callstack_num; i++) {
-		struct callstack_s *cs = &g_callstacks[i];
+	struct callstack_s *cs;
+	array_for_each(cs, &g_callstacks) {
 		if (cs->expired_count == cs->free_expired_count) {
 			continue;
 		}

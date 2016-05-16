@@ -9,42 +9,31 @@
 #include <libunwind-ptrace.h>
 #include <string.h>
 
-#include "memleax.h"
+#include "array.h"
 
+struct symbol_s {
+	uintptr_t	address;
+	size_t		size;
+	int8_t		weak;
+	char		name[47];
+};
 
-/* global symblo-table */
-#define SYMBOL_MAX 100000
-static int g_symtab_num = 0;
-static struct symbol_s {
-       uintptr_t        address;
-       size_t          size;
-       int             weak;
-       const char      *name;
-} g_symbol_table[SYMBOL_MAX];
+static ARRAY(g_symbol_table, struct symbol_s, 1000);
 
-
-static void symbol_new(const char *name, uintptr_t address, size_t size, int weak)
+static int symbol_cmp(const void *a, const void *b)
 {
-	static char sym_name_buf[SYMBOL_MAX * 20];
-	static char *sym_name_pos = sym_name_buf;
-
-	if (g_symtab_num == SYMBOL_MAX) {
-		printf("error: too many symbols in symbol-table\n");
-		exit(3);
-	}
-
-	struct symbol_s *sym = &g_symbol_table[g_symtab_num++];
-	sym->address = address;
-	sym->size = size;
-	sym->weak = weak;
-	sym->name = sym_name_pos;
-
-	strcpy(sym_name_pos, name);
-	sym_name_pos += strlen(name) + 1;
+	const struct symbol_s *sa = a;
+	const struct symbol_s *sb = b;
+	return sa->address < sb->address ? -1 : 1;
 }
-
 int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 {
+	/* finish */
+	if (path == NULL) {
+		array_sort(&g_symbol_table, symbol_cmp);
+		return 0;
+	}
+
 	uintptr_t offset = exe_self ? 0 : start;
 	int sh_type = exe_self ? SHT_SYMTAB : SHT_DYNSYM;
 
@@ -85,9 +74,16 @@ int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 			continue;
 		}
 
+		struct symbol_s *sym = array_push(&g_symbol_table);
+
 		char *name = elf_strptr(elf, shdr->sh_link, (size_t)esym->st_name);
-		symbol_new(name, esym->st_value + offset, esym->st_size,
-				ELF64_ST_BIND(esym->st_info) == STB_WEAK);
+		strncpy(sym->name, name, sizeof(sym->name));
+		sym->name[sizeof(sym->name) - 1] = '\0';
+
+		sym->address = esym->st_value + offset;
+		sym->size = esym->st_size;
+		sym->weak = (ELF64_ST_BIND(esym->st_info) == STB_WEAK);
+
 		count++;
 	}
 
@@ -97,23 +93,13 @@ int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 	return count;
 }
 
-static int symbol_cmp(const void *a, const void *b)
-{
-	const struct symbol_s *sa = a;
-	const struct symbol_s *sb = b;
-	return sa->address < sb->address ? -1 : 1;
-}
-void symtab_build_finish(void)
-{
-	qsort(g_symbol_table, g_symtab_num, sizeof(struct symbol_s), symbol_cmp);
-}
-
 const char *symtab_by_address(uintptr_t address, int *offset)
 {
-	int min = 0, max = g_symtab_num - 1;
+	int min = 0, max = g_symbol_table.item_num - 1;
+	struct symbol_s *table = g_symbol_table.data;
 	while (min <= max) {
 		int mid = (min + max) / 2;
-		struct symbol_s *sym = &g_symbol_table[mid];
+		struct symbol_s *sym = &table[mid];
 		if (address < sym->address) {
 			max = mid - 1;
 		} else if (address > sym->address + sym->size) {
@@ -128,15 +114,15 @@ const char *symtab_by_address(uintptr_t address, int *offset)
 
 uintptr_t symtab_by_name(const char *name)
 {
-	int i;
 	uintptr_t address = NULL;
-	for (i = 0; i < g_symtab_num; i++) {
-		if (strcmp(g_symbol_table[i].name, name) == 0) {
-			if (!g_symbol_table[i].weak) {
-				return g_symbol_table[i].address;
+	struct symbol_s *sym;
+	array_for_each(sym, &g_symbol_table) {
+		if (strcmp(sym->name, name) == 0) {
+			if (!sym->weak) {
+				return sym->address;
 			}
 			if (address == 0) {
-				address = g_symbol_table[i].address;
+				address = sym->address;
 			}
 		}
 	}

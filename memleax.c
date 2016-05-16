@@ -49,7 +49,8 @@ static void info_build_debug(int (*buildf)(const char*, uintptr_t, uintptr_t, in
 	}
 }
 /* build symbol-table and debug-line */
-static void info_build(const char *debug_info_file)
+static void info_build(int (*buildf)(const char*, uintptr_t, uintptr_t, int),
+		const char *name, const char *debug_info_file)
 {
 	/* exe */
 	char pname[30];
@@ -81,22 +82,17 @@ static void info_build(const char *debug_info_file)
 		if (perms[2] == 'x' && path[0] == '/') {
 			int exe_self = (strcmp(exe_name, path) == 0);
 
-			info_build_debug(ptr_maps_build, "maps",
-					path, start, end, exe_self);
-
 			if (exe_self && debug_info_file) {
 				strcpy(path, debug_info_file);
 			}
-			info_build_debug(symtab_build, "symbol table",
-					path, start, end, exe_self);
-			info_build_debug(debug_line_build, "debug line",
+			info_build_debug(buildf, name,
 					path, start, end, exe_self);
 		}
 	}
 	fclose(maps);
 
-	symtab_build_finish();
-	debug_line_build_finish();
+	/* finish */
+	buildf(NULL, 0, 0, 0);
 }
 
 /* attach all existing threads */
@@ -197,7 +193,9 @@ int main(int argc, char * const *argv)
 	}
 
 	/* prepare */
-	info_build(debug_info_file);
+	info_build(ptr_maps_build, "maps", NULL);
+	info_build(symtab_build, "symbol table", debug_info_file);
+	info_build(debug_line_build, "debug line", debug_info_file);
 
 	attach_threads();
 
