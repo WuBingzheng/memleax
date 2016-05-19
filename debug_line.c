@@ -1,11 +1,14 @@
 #include <stdio.h>
+#include "debug_line.h"
+
+#ifdef MLD_WITH_LIBDWARF
+
 #include <libdwarf/libdwarf.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "array.h"
@@ -157,3 +160,14 @@ const char *debug_line_search(uintptr_t address, int *lineno)
 
 	return NULL;
 }
+
+#else /* MLD_WITH_LIBDWARF */
+int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
+{
+	return 1;
+}
+const char *debug_line_search(uintptr_t address, int *lineno)
+{
+	return NULL;
+}
+#endif /* MLD_WITH_LIBDWARF */
