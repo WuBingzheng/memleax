@@ -2,8 +2,9 @@
 #define _MLD_PTR_BACKTRACE_
 
 #include <libunwind-ptrace.h>
+#include <sys/types.h>
 
-int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_self);
+void ptr_maps_build(pid_t pid);
 int ptr_backtrace(unw_word_t *ips, int size);
 
 #endif

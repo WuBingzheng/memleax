@@ -10,31 +10,46 @@
 #include <sys/user.h>
 #include <string.h>
 #include <signal.h>
-#include <dirent.h>
 
 #include "breakpoint.h"
 #include "ptrace_utils.h"
 #include "memblock.h"
 #include "symtab.h"
 #include "debug_line.h"
+#include "proc_info.h"
 
 uintptr_t g_current_entry;
 pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
 
 static pid_t g_target_pid;
+static const char *opt_debug_info_file;
 
 
-/* build symbol-table and debug-line of one file */
-static void info_build_debug(int (*buildf)(const char*, uintptr_t, uintptr_t, int),
+/* try debug-info-files for buiding some info */
+void try_debug(int (*buildf)(const char*, size_t, size_t, int),
 		const char *name, const char *path,
-		uintptr_t start, uintptr_t end, int exe_self)
+		size_t start, size_t end, int exe_self)
 {
+	if (exe_self && opt_debug_info_file) {
+		if (buildf(opt_debug_info_file, start, end, 1) < 0) {
+			printf("Error: no %s found in debug-info-file %s.",
+					name, opt_debug_info_file);
+			exit(4);
+		}
+		return;
+	}
+
 	if (buildf(path, start, end, exe_self) > 0) {
 		return;
 	}
 
+	/* try debug-info-dir */
 	char debug_path[2048];
+	sprintf(debug_path, "%s.debug", path);
+	if (buildf(debug_path, start, end, exe_self) > 0) {
+		return;
+	}
 	sprintf(debug_path, "/lib/debug%s.debug", path);
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
@@ -43,85 +58,15 @@ static void info_build_debug(int (*buildf)(const char*, uintptr_t, uintptr_t, in
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
+	if (buildf(path, start, end, exe_self) > 0) {
+		return;
+	}
 
 	if (exe_self) {
-		printf("warning: no %s found for %s\n", name, path);
+		printf("Warning: no %s found for %s\n", name, path);
 	}
 }
-/* build symbol-table and debug-line */
-static void info_build(int (*buildf)(const char*, uintptr_t, uintptr_t, int),
-		const char *name, const char *debug_info_file)
-{
-	/* exe */
-	char pname[30];
-	char exe_name[1024];
-	sprintf(pname, "/proc/%d/exe", g_target_pid);
-	int exe_len = readlink(pname, exe_name, sizeof(exe_name));
-	if (exe_len < 0) {
-		perror("error in open /proc/pid/exe");
-		exit(3);
-	}
-	exe_name[exe_len] = '\0';
 
-	/* maps */
-	sprintf(pname, "/proc/%d/maps", g_target_pid);
-	FILE *maps = fopen(pname, "r");
-	if (maps == NULL) {
-		perror("error in open /proc/pid/maps");
-		exit(3);
-	}
-
-	char line[1024];
-	uintptr_t start, end;
-	char perms[5], path[1024];
-	int ia, ib, ic, id;
-	while(fgets(line, sizeof(line), maps) != NULL) {
-		sscanf(line, "%lx-%lx %s %x %x:%x %d %s",
-				&start, &end, perms, &ia, &ib, &ic, &id, path);
-
-		if (perms[2] == 'x' && path[0] == '/') {
-			int exe_self = (strcmp(exe_name, path) == 0);
-
-			if (exe_self && debug_info_file) {
-				strcpy(path, debug_info_file);
-			}
-			info_build_debug(buildf, name,
-					path, start, end, exe_self);
-		}
-	}
-	fclose(maps);
-
-	/* finish */
-	buildf(NULL, 0, 0, 0);
-}
-
-/* attach all existing threads */
-static void attach_threads(void)
-{
-	char tname[30];
-	sprintf(tname, "/proc/%d/task", g_target_pid);
-	DIR *dirp = opendir(tname);
-
-	pid_t pid;
-	struct dirent *e;
-	while ((e = readdir(dirp)) != NULL) {
-		pid = atoi(e->d_name);
-
-		if (pid == 0) continue;
-
-		ptrace_attach(pid);
-		waitpid(pid, NULL, __WALL);
-		ptrace_trace_child(pid);
-
-		if (pid == g_target_pid) { /* set br only once */
-			breakpoint_init(g_target_pid);
-		}
-
-		ptrace_continue(pid, 0);
-	}
-
-	closedir(dirp);
-}
 
 static void signal_handler(int signo)
 {
@@ -130,7 +75,6 @@ static void signal_handler(int signo)
 
 int main(int argc, char * const *argv)
 {
-	const char *debug_info_file = NULL;
 	time_t memory_expire = 5;
 	int stop_number = 1000;
 
@@ -161,7 +105,7 @@ int main(int argc, char * const *argv)
 			}
 			break;
 		case 'd':
-			debug_info_file = optarg;
+			opt_debug_info_file = optarg;
 			break;
 		case 'l':
 			opt_backtrace_limit = atoi(optarg);
@@ -204,11 +148,24 @@ int main(int argc, char * const *argv)
 	}
 
 	/* prepare */
-	info_build(ptr_maps_build, "maps", NULL);
-	info_build(symtab_build, "symbol table", debug_info_file);
-	info_build(debug_line_build, "debug line", debug_info_file);
+	ptr_maps_build(g_target_pid);
+	symtab_build(g_target_pid);
+	debug_line_build(g_target_pid);
 
-	attach_threads();
+	/* attach all exist threads */
+	pid_t task_id;
+	while ((task_id = proc_tasks(g_target_pid)) > 0) {
+		printf(" id : %d\n", task_id);
+		ptrace_attach(task_id);
+		waitpid(task_id, NULL, __WALL);
+		ptrace_trace_child(task_id);
+
+		if (task_id == g_target_pid) { /* set br once */
+			breakpoint_init(g_target_pid);
+		}
+
+		ptrace_continue(task_id, 0);
+	}
 
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);

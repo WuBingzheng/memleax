@@ -6,7 +6,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include "ptr_backtrace.h"
+#include "proc_info.h"
 #include "memleax.h"
 #include "symtab.h"
 #include "list.h"
@@ -21,13 +23,8 @@ struct map_section_s {
 	unw_word_t		data[0];
 };
 
-int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
+static void ptr_maps_build_file(const char *path, size_t start, size_t end)
 {
-	/* finish */
-	if (path == NULL) {
-		return 0;
-	}
-
 	/* create map-section */
 	struct map_section_s *ms = calloc(1, sizeof(struct map_section_s) + end - start);
 	ms->start = start;
@@ -38,10 +35,19 @@ int ptr_maps_build(const char *path, uintptr_t start, uintptr_t end, int exe_sel
 	/* XXX: should parse ELF */
 	int fd = open(path, O_RDONLY);
 	if (read(fd, ms->data, end - start) != end - start) {
-		return -1;
+		printf("Error: read map of %s\n", path);
+		exit(6);
 	}
 	close(fd);
-	return 1;
+}
+
+void ptr_maps_build(pid_t pid)
+{
+	const char *path;
+	size_t start, end;
+	while ((path = proc_maps(pid, &start, &end, NULL)) != NULL) {
+		ptr_maps_build_file(path, start, end);
+	}
 }
 
 static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val,

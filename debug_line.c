@@ -12,6 +12,8 @@
 #include <string.h>
 
 #include "array.h"
+#include "memleax.h"
+#include "proc_info.h"
 
 struct debug_line_s {
 	uintptr_t	address;
@@ -48,20 +50,9 @@ static void debug_line_new(Dwarf_Addr pc, Dwarf_Unsigned lineno, const char *fil
 	}
 }
 
-static int debug_line_cmp(const void *a, const void *b)
+static int debug_line_build_file(const char *path, size_t start,
+		size_t end, int exe_self)
 {
-	const struct debug_line_s *dla = a;
-	const struct debug_line_s *dlb = b;
-	return dla->address < dlb->address ? -1 : 1;
-}
-int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
-{
-	/* finish */
-	if (path == NULL) {
-		array_sort(&g_debug_lines, debug_line_cmp);
-		return 0;
-	}
-
 	uintptr_t offset = exe_self ? 0 : start;
 
 	Dwarf_Debug dbg;
@@ -127,6 +118,27 @@ int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_s
 	return count;
 }
 
+static int debug_line_cmp(const void *a, const void *b)
+{
+	const struct debug_line_s *dla = a;
+	const struct debug_line_s *dlb = b;
+	return dla->address < dlb->address ? -1 : 1;
+}
+
+void debug_line_build(pid_t pid)
+{
+	const char *path;
+	size_t start, end;
+	int exe_self;
+	while ((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
+		try_debug(debug_line_build_file, "debug info",
+				path, start, end, exe_self);
+	}
+
+	array_sort(&g_debug_lines, debug_line_cmp);
+}
+
+
 const char *debug_line_search(uintptr_t address, int *lineno)
 {
 	/* check in address region? */
@@ -162,9 +174,8 @@ const char *debug_line_search(uintptr_t address, int *lineno)
 }
 
 #else /* MLD_WITH_LIBDWARF */
-int debug_line_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
+void debug_line_build(pid_t pid)
 {
-	return 1;
 }
 const char *debug_line_search(uintptr_t address, int *lineno)
 {

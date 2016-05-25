@@ -1,3 +1,4 @@
 *.o
+*.tar.gz
 memleax
 depends

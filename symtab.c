@@ -10,6 +10,8 @@
 #include <string.h>
 
 #include "array.h"
+#include "memleax.h"
+#include "proc_info.h"
 
 struct symbol_s {
 	uintptr_t	address;
@@ -20,20 +22,9 @@ struct symbol_s {
 
 static ARRAY(g_symbol_table, struct symbol_s, 1000);
 
-static int symbol_cmp(const void *a, const void *b)
+static int symtab_build_file(const char *path, uintptr_t start,
+		uintptr_t end, int exe_self)
 {
-	const struct symbol_s *sa = a;
-	const struct symbol_s *sb = b;
-	return sa->address < sb->address ? -1 : 1;
-}
-int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
-{
-	/* finish */
-	if (path == NULL) {
-		array_sort(&g_symbol_table, symbol_cmp);
-		return 0;
-	}
-
 	uintptr_t offset = exe_self ? 0 : start;
 	int sh_type = exe_self ? SHT_SYMTAB : SHT_DYNSYM;
 
@@ -44,6 +35,10 @@ int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 		return -1;
 	}
 	Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
+	if (elf == NULL) {
+		close(fd);
+		return -1;
+	}
 
 	/* find symbol section */
 	Elf_Scn* section = NULL;
@@ -55,12 +50,16 @@ int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 		}
 	}
 	if (section == NULL) {
+		elf_end(elf);
+		close(fd);
 		return -1;
 	}
 
 	/* build symbol table */
 	Elf_Data *data = elf_getdata(section, NULL);
 	if (data == NULL || data->d_size == 0) {
+		elf_end(elf);
+		close(fd);
 		return -1;
 	}
 
@@ -91,6 +90,28 @@ int symtab_build(const char *path, uintptr_t start, uintptr_t end, int exe_self)
 	elf_end(elf);
 	close(fd);
 	return count;
+}
+
+static int symbol_cmp(const void *a, const void *b)
+{
+	const struct symbol_s *sa = a;
+	const struct symbol_s *sb = b;
+	return sa->address < sb->address ? -1 : 1;
+}
+
+void symtab_build(pid_t pid)
+{
+	const char *path;
+	size_t start, end;
+	int exe_self;
+
+	while ((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
+		try_debug(symtab_build_file, "symbol table",
+				path, start, end, exe_self);
+	}
+
+	/* finish */
+	array_sort(&g_symbol_table, symbol_cmp);
 }
 
 const char *symtab_by_address(uintptr_t address, int *offset)

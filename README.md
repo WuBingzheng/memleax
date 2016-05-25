@@ -1,25 +1,16 @@
 ## memleax
 
-`memleax` detects memory leak of a running process.
+`memleax` detects memory leak of a *running* process.
 
-
-## environment
-
-Linux, x86_64
-
-
-## dependence
-
-* libunwind
-* libdwarf
-* elfutils-libelf
+It is very convenient, need not re-compiling or restarting target process,
+and gives memory leak report in real time.
 
 
 ## how it works
 
 `memleax` attachs a running process, hooks memory allocate/free APIs,
-and reports the memory blocks that live longer than an appointed
-time.
+records all memory blocks, and reports the blocks which lives longer
+than 5 seconds (you can change this time by -e option).
 
 
 ## difference from Valgrind
@@ -37,6 +28,21 @@ and only detects memory leak.
 
 In summary, I think `Valgrind` is more powerful, while `memleax` is more suitable
 for production environment.
+
+
+## environment
+
+Linux, x86_64
+
+
+## dependence
+
+* libunwind
+* elfutils-libelf
+* libdwarf
+
+If you do not have libdwarf, modify `Makefile` to disable it.
+As a result, you can not see file name and line number in backtrace.
 
 
 ## usage
