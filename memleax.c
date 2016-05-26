@@ -155,7 +155,6 @@ int main(int argc, char * const *argv)
 	/* attach all exist threads */
 	pid_t task_id;
 	while ((task_id = proc_tasks(g_target_pid)) > 0) {
-		printf(" id : %d\n", task_id);
 		ptrace_attach(task_id);
 		waitpid(task_id, NULL, __WALL);
 		ptrace_trace_child(task_id);
@@ -263,7 +262,7 @@ int main(int argc, char * const *argv)
 
 			/* wakeup one hold-thread */
 			if (hold_thread_num != 0) {
-				ptrace_continue(hold_threads[hold_thread_num--], 0);
+				ptrace_continue(hold_threads[--hold_thread_num], 0);
 				log_debug("wakeup thread: %d\n", hold_threads[hold_thread_num]);
 			}
 
