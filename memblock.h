@@ -19,7 +19,7 @@ struct memblock_s {
 struct memblock_s *memblock_new(uintptr_t pointer, size_t size);
 void memblock_delete(struct memblock_s *mb);
 struct memblock_s *memblock_search(uintptr_t pointer);
-int memblock_expire(time_t expire, int stop_number);
+int memblock_expire(time_t expire);
 void memblock_count(void);
 
 #endif

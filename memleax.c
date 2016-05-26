@@ -293,12 +293,12 @@ int main(int argc, char * const *argv)
 			}
 		}
 
-		ptrace_continue(pid, 0);
-
-		if (memblock_expire(memory_expire, stop_number) != 0) {
+		if (memblock_expire(memory_expire) >= stop_number) {
 			printf("\n== %d expired memory blocks of one CallStack.\n", stop_number);
 			break;
 		}
+
+		ptrace_continue(pid, 0);
 	}
 
 	/* clean up, entry and return point */
