@@ -6,8 +6,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/reg.h>
-#include <sys/user.h>
 #include <string.h>
 #include <signal.h>
 
@@ -17,6 +15,7 @@
 #include "symtab.h"
 #include "debug_line.h"
 #include "proc_info.h"
+#include "memleax.h"
 
 uintptr_t g_current_entry;
 pid_t g_current_thread;
@@ -152,20 +151,30 @@ int main(int argc, char * const *argv)
 	symtab_build(g_target_pid);
 	debug_line_build(g_target_pid);
 
-	/* attach all exist threads */
+#ifdef MLX_LINUX
+	/* Linux: attach all other exist threads */
 	pid_t task_id;
 	while ((task_id = proc_tasks(g_target_pid)) > 0) {
+		if (task_id == g_target_pid) {
+			continue;
+		}
 		ptrace_attach(task_id);
 		waitpid(task_id, NULL, __WALL);
 		ptrace_trace_child(task_id);
-
-		if (task_id == g_target_pid) { /* set br once */
-			breakpoint_init(g_target_pid);
-		}
-
 		ptrace_continue(task_id, 0);
 	}
+#endif
 
+	/* attach target and set breakpoint */
+	ptrace_attach(g_target_pid);
+	waitpid(g_target_pid, NULL, 0);
+	ptrace_trace_child(g_target_pid);
+
+	breakpoint_init(g_target_pid);
+
+	ptrace_continue(g_target_pid, 0);
+
+	/* signals */
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
@@ -182,7 +191,11 @@ int main(int argc, char * const *argv)
 	while (1) {
 		/* wait for breakpoint */
 		int status;
+#ifdef MLX_LINUX
 		pid_t pid = waitpid(-1, &status, __WALL);
+#else /* FreeBSD */
+		pid_t pid = waitpid(-1, &status, 0);
+#endif
 		log_debug("wait: pid=%d status=%x\n", pid, status);
 		if (pid < 0) {
 			perror("\n== Error on waitpid()");
@@ -196,7 +209,16 @@ int main(int argc, char * const *argv)
 			break;
 		}
 		int signum = WSTOPSIG(status);
-		if (signum == SIGSTOP) { /* by signal_handler() */
+		if (signum == SIGSTOP) {
+#ifdef MLX_FREEBSD
+			/* fork in FreeBSD: trap at child process first instruction */
+			if (ptrace_new_child_first(pid)) {
+				breakpoint_cleanup(pid);
+				ptrace_detach(pid, 0);
+				continue;
+			}
+#endif
+			/* by signal_handler() */
 			printf("\n== Terminate monitoring.\n");
 			break;
 		}
@@ -205,12 +227,19 @@ int main(int argc, char * const *argv)
 			continue;
 		}
 
-		/* new thread or process? */
-		int pevent = status >> 16;
-		if (pevent != 0) {
+#ifdef MLX_FREEBSD
+		/* fork in FreeBSD: trap because of new child */
+		if (ptrace_new_child_forked(pid)) {
+			ptrace_continue(pid, 0);
+			continue;
+		}
+#endif
+#ifdef MLX_LINUX
+		/* new child (thread or process) in Linux */
+		if (ptrace_new_child(status)) {
 			pid_t child = ptrace_get_child(pid);
 			waitpid(child, NULL, __WALL);
-			if (pevent == PTRACE_EVENT_CLONE) { /* thread */
+			if (ptrace_new_child_thread(status)) { /* thread */
 				log_debug("new thread id=%d\n", child);
 				ptrace_continue(child, 0);
 			} else { /* process, detach it */
@@ -221,16 +250,19 @@ int main(int argc, char * const *argv)
 			ptrace_continue(pid, 0);
 			continue;
 		}
+#endif
 
 		/* get registers */
-		struct user_regs_struct regs;
+		registers_info_t regs;
 		ptrace_get_regs(pid, &regs);
 
 		/* unwind the RIP back by 1 to let the CPU execute the
 		 * original instruction that was there. */
-		regs.rip -= 1;
+		REG_RIP(regs) -= 1;
 		ptrace_set_regs(pid, &regs);
-		log_debug("\nbreak at: %llx\n", regs.rip);
+
+		uintptr_t rip = REG_RIP(regs);
+		log_debug("\nbreak at: %lx\n", rip);
 
 		/* another thread is in a function, so hold this one */
 		if (return_address != 0 && last_thread != pid) {
@@ -250,14 +282,14 @@ int main(int argc, char * const *argv)
 			ptrace_set_int3(pid, bp->entry_address, bp->entry_code);
 		}
 
-		if (regs.rip == return_address) {
+		if (rip == return_address) {
 			/* -- at function return */
 
 			/* set these for building backstrace far away */
 			g_current_entry = bp->entry_address;
 			g_current_thread = pid;
 
-			bp->handler(regs.rax, arg1, arg2);
+			bp->handler(REG_RAX(regs), arg1, arg2);
 			return_address = 0;
 
 			/* wakeup one hold-thread */
@@ -266,29 +298,29 @@ int main(int argc, char * const *argv)
 				log_debug("wakeup thread: %d\n", hold_threads[hold_thread_num]);
 			}
 
-		} else if ((bp = breakpoint_by_entry(regs.rip)) != NULL) {
+		} else if ((bp = breakpoint_by_entry(rip)) != NULL) {
 			/* -- at function entry */
 
 			/* recover entry code */
 			ptrace_set_data(pid, bp->entry_address, bp->entry_code);
 
 			/* set breakpoint at return address */
-			return_address = ptrace_get_data(pid, regs.rsp);
+			return_address = ptrace_get_data(pid, REG_RSP(regs));
 			return_code = ptrace_get_data(pid, return_address);
 			ptrace_set_int3(pid, return_address, return_code);
 
 			/* save arguments */
-			arg1 = regs.rdi;
-			arg2 = regs.rsi;
+			arg1 = REG_RDI(regs);
+			arg2 = REG_RSI(regs);
 
 			last_thread = pid;
 
 		} else {
 			/* maybe other thread met a return-breakpoint which
 			 * is recoverd already */
-			uintptr_t code = ptrace_get_data(pid, regs.rip);
+			uintptr_t code = ptrace_get_data(pid, rip);
 			if ((code & 0xFF) == 0xCC) {
-				printf("unknown breakpoint %llx\n", regs.rip);
+				printf("unknown breakpoint %lx\n", rip);
 				break;
 			}
 		}

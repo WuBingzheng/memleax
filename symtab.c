@@ -5,7 +5,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#ifdef MLX_LIBELF_INNER
+#include <libelf/libelf.h>
+#else
 #include <libelf.h>
+#endif
 #include <libunwind-ptrace.h>
 #include <string.h>
 
@@ -68,7 +72,9 @@ static int symtab_build_file(const char *path, uintptr_t start,
 	Elf64_Sym *lastsym = (Elf64_Sym *)((char*) data->d_buf + data->d_size);
 	for (; esym < lastsym; esym++) {
 		if ((esym->st_value == 0) ||
+#ifdef MLX_LINUX
 				(ELF64_ST_BIND(esym->st_info) == STB_NUM) ||
+#endif
 				(ELF64_ST_TYPE(esym->st_info) != STT_FUNC)) {
 			continue;
 		}
@@ -135,7 +141,7 @@ const char *symtab_by_address(uintptr_t address, int *offset)
 
 uintptr_t symtab_by_name(const char *name)
 {
-	uintptr_t address = NULL;
+	uintptr_t address = 0;
 	struct symbol_s *sym;
 	array_for_each(sym, &g_symbol_table) {
 		if (strcmp(sym->name, name) == 0) {

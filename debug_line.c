@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include "debug_line.h"
 
-#ifdef MLD_WITH_LIBDWARF
+#ifdef MLX_WITH_LIBDWARF
 
+#ifdef MLX_LIBDWARF_INNER
 #include <libdwarf/libdwarf.h>
+#else
+#include <libdwarf.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

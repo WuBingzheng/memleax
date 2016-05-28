@@ -7,6 +7,16 @@
 #include "memblock.h"
 #include "callstack.h"
 
+struct memblock_s {
+	struct list_head	list_node;
+	struct hlist_node	hash_node;
+	uintptr_t		pointer;
+	size_t			size;
+	time_t			create;
+	int			expired;
+	struct callstack_s	*callstack;
+};
+
 static struct hlist_head g_memblock_hash[HASH_SIZE];
 
 static LIST_HEAD(g_memblock_active);
@@ -67,6 +77,15 @@ void memblock_delete(struct memblock_s *mb)
 	hash_delete(&mb->hash_node);
 	list_del(&mb->list_node);
 	free(mb);
+}
+
+void memblock_update_size(struct memblock_s *mb, size_t size)
+{
+	if (mb != NULL) {
+		mb->callstack->alloc_size -= mb->size;
+		mb->callstack->alloc_size += size;
+		mb->size = size;
+	}
 }
 
 struct memblock_s *memblock_search(uintptr_t pointer)

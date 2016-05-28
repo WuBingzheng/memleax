@@ -9,6 +9,7 @@
 #include "ptr_backtrace.h"
 #include "ptrace_utils.h"
 #include "symtab.h"
+#include "memleax.h"
 
 struct breakpoint_s g_breakpoints[4];
 
@@ -31,12 +32,7 @@ static void bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t 
 	log_debug("-- realloc pointer:%lx->%lx size:%ld\n", old_pointer, new_pointer, size);
 
 	if (new_pointer == old_pointer) {
-		struct memblock_s *mb = memblock_search(old_pointer);
-		if (mb != NULL) {
-			mb->callstack->alloc_size -= mb->size;
-			mb->callstack->alloc_size += size;
-			mb->size = size;
-		}
+		memblock_update_size(memblock_search(old_pointer), size);
 	} else {
 		memblock_delete(memblock_search(old_pointer));
 		memblock_new(new_pointer, size);

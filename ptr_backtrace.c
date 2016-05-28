@@ -9,10 +9,9 @@
 
 #include "ptr_backtrace.h"
 #include "proc_info.h"
-#include "memleax.h"
-#include "symtab.h"
 #include "list.h"
 #include "hash.h"
+#include "memleax.h"
 #include "ptrace_utils.h"
 
 
@@ -116,8 +115,8 @@ int ptr_backtrace(unw_word_t *ips, int size)
 
 	/* init at first time */
 	if (list_empty(&space_head)) {
-		_UPT_accessors.access_mem = _ptr_access_mem;
-		_UPT_accessors.find_proc_info = _ptr_find_proc_info;
+		// _UPT_accessors.access_mem = _ptr_access_mem;
+		// _UPT_accessors.find_proc_info = _ptr_find_proc_info;
 
 		int i;
 		for (i = 0; i < SPACE_MAX; i++) {

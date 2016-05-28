@@ -1,6 +1,8 @@
 #ifndef _MLD_BREAKPOINT_
 #define _MLD_BREAKPOINT_
 
+#include <sys/types.h>
+
 typedef void (*bp_handler_f) (uintptr_t, uintptr_t, uintptr_t);
 
 struct breakpoint_s {
