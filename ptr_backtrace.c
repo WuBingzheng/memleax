@@ -62,6 +62,10 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 		}
 	}
 	*val = ptrace_get_data(g_current_thread, addr);
+#ifdef MLX_FREEBSD
+	unw_word_t high = ptrace_get_data(g_current_thread, addr + 4);
+	*val = (high << 32) | (*val & 0xFFFFFFFFUL);
+#endif
 	return 0;
 }
 static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_info_t *pi,
@@ -115,8 +119,8 @@ int ptr_backtrace(unw_word_t *ips, int size)
 
 	/* init at first time */
 	if (list_empty(&space_head)) {
-		// _UPT_accessors.access_mem = _ptr_access_mem;
-		// _UPT_accessors.find_proc_info = _ptr_find_proc_info;
+		_UPT_accessors.access_mem = _ptr_access_mem;
+		_UPT_accessors.find_proc_info = _ptr_find_proc_info;
 
 		int i;
 		for (i = 0; i < SPACE_MAX; i++) {
