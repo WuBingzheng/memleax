@@ -1,4 +1,4 @@
 *.o
 *.tar.gz
 memleax
-depends
+Makefile
