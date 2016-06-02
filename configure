@@ -1,0 +1,155 @@
+#!/bin/sh
+
+disable_libdwarf=false
+prefix='/usr/local'
+
+# parse options
+for opt in $@; do
+	key=`echo $opt | cut -d'=' -f1`
+	value=`echo $opt | cut -sd'=' -f2`
+	case $key in
+	'--disable-libdwarf')
+		disable_libdwarf=true
+		;;
+	'--prefix')
+		prefix=$value
+		;;
+	'--version')
+		echo "version: 0.2"
+		exit 0
+		;;
+	'--help')
+		echo "Usage: ./configure [options]"
+		echo "Options:"
+		echo "  --disable-libdwarf"
+		echo "        If you do not have libdwarf, set this to disable it,"
+		echo "        and you will not see file name and line number in backtrace."
+		echo "  --prefix=<path>"
+		echo "        Set install path. default is '/usr/local'."
+		echo "  --version"
+		echo "        Show version."
+		echo "  --help"
+		echo "        Show this message."
+		exit 0
+		;;
+	*)
+		echo "invalid option: $opt. Try --help."
+		exit 1
+		;;
+	esac
+done
+
+
+# check OS and machine type, GNU/Linux-x86_64 or FreeBSD-amd64
+echo 'checking OS and machine type...'
+machine_type=`uname -m`
+os_type=`uname`
+case $os_type in
+'Linux')
+	if [ $machine_type != x86_64 ] ; then
+		echo "Error: unsupported machine type: $machine_type. Only x86_64 is supported."
+		exit 2
+	fi
+	CFLAGS="$CFLAGS -DMLX_LINUX"
+	;;
+'FreeBSD')
+	if [ $machine_type != amd64 ] ; then
+		echo "Error: unsupported machine type: $machine_type. Only amd64 is supported."
+		exit 2
+	fi
+	CFLAGS="$CFLAGS -DMLX_FREEBSD"
+	LDLIBS="$LDLIBS -lprocstat -lutil"
+	CFLAGS="$CFLAGS -I/usr/local/include/"
+	LDFLAGS="$LDFLAGS -L/usr/local/lib/"
+	;;
+*)
+	echo "Error: unsupported OS type: $os_type."
+	echo "Only GNU/Linux and FreeBSD are supported."
+	exit 2
+	;;
+esac
+
+
+# check libraries
+echo 'checking libraries...'
+check_lib()
+{
+	lib=$1
+	header=$2
+	function=$3
+
+	cat << EOF > tmp.c
+		#include <$header>
+		#include <stdio.h>
+		int main() {
+			$function;
+			return 0;
+		}
+EOF
+	if ! cc -M $CFLAGS tmp.c >/dev/null 2>&1 ; then
+		echo "Error: $lib-devel is missing."
+		rm -f tmp.c
+		exit 1
+	fi
+	if ! cc $CFLAGS tmp.c -o tmp $LDFLAGS $LDLIBS >/dev/null 2>&1 ; then
+		echo "Error: $lib is missing."
+		rm -f tmp.c tmp
+		exit 1
+	fi
+	rm -f tmp.c tmp
+}
+
+# - check libunwind
+LDLIBS="$LDLIBS -lunwind-ptrace -lunwind -lunwind-x86_64"
+check_lib libunwind libunwind.h "unw_create_addr_space(NULL,0)"
+
+# - check libelf
+LDLIBS="$LDLIBS -lelf"
+check_lib libelf libelf.h "elf_begin(0,0,NULL)"
+
+# - check libdwarf
+if ! $disable_libdwarf; then
+	CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/local/include/libdwarf/"
+	LDLIBS="$LDLIBS -ldwarf"
+	check_lib libdwarf libdwarf.h "dwarf_init(0,0,0,0,NULL,NULL)"
+fi
+
+
+# check done, generate Makefile
+echo 'generate Makefile...'
+SOURCES="breakpoint.c debug_line.c memleax.c ptr_backtrace.c callstack.c memblock.c proc_info.c symtab.c"
+
+cat << EOF > Makefile
+CFLAGS = $CFLAGS -g -O2 -Wall
+LDLIBS = $LDLIBS
+LDFLAGS = $LDFLAGS
+
+TARGET = memleax
+
+SOURCES = $SOURCES
+OBJS = `echo $SOURCES | sed 's/\.c/\.o/g'`
+
+EOF
+
+cat << 'EOF' >> Makefile
+$(TARGET) : $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
+
+clean :
+	rm -f $(OBJS) $(TARGET)
+
+EOF
+
+cat << EOF >> Makefile
+install :
+	mkdir -p $prefix/bin/
+	cp \$(TARGET) $prefix/bin/
+uninstall :
+	rm -f $prefix/bin/\$(TARGET)
+
+EOF
+
+cc -MM $CFLAGS $SOURCES >> Makefile
+
+# done
+echo 'done.'
