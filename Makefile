@@ -1,5 +1,5 @@
-CFLAGS	= -g -O2 -Wall -I/usr/local/include/
-LDLIBS	= -L/usr/local/lib/ -lunwind-ptrace -lunwind -lunwind-x86_64 -lelf -lprocstat -lutil
+CFLAGS	= -g -O2 -Wall
+LDLIBS	= -lunwind-ptrace -lunwind -lunwind-x86_64 -lelf
 
 OBJS	= breakpoint.o callstack.o debug_line.o memblock.o memleax.o proc_info.o ptr_backtrace.o symtab.o
 
@@ -7,18 +7,19 @@ TARGET	= memleax
 
 # delete the following 2 lines if you do not have libdwarf,
 # and you will lose debug-line show in output.
-CFLAGS += -DMLX_WITH_LIBDWARF
-LDLIBS += -ldwarf
+CFLAGS	+= -DMLX_WITH_LIBDWARF -I/usr/local/include/libdwarf/
+LDLIBS	+= -ldwarf
 
-CFLAGS += -DMLX_LIBELF_INNER
+CFLAGS	+= -DMLX_FREEBSD
+LDLIBS	+= -lprocstat -lutil
+CFLAGS	+= -I/usr/local/include/
+LDFLAGS	+= -L/usr/local/lib/
 
-CFLAGS += -DMLX_FREEBSD
-
-memleax : $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDLIBS)
+$(TARGET) : $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDLIBS)
 
 clean :
-	rm -f $(OBJS) depends memleax
+	rm -f $(OBJS) $(TARGET)
 
 breakpoint.o: breakpoint.c callstack.h hash.h list.h ptr_backtrace.h \
 	memblock.h breakpoint.h ptrace_utils.h memleax.h symtab.h

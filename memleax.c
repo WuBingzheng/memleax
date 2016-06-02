@@ -57,9 +57,6 @@ void try_debug(int (*buildf)(const char*, size_t, size_t, int),
 	if (buildf(debug_path, start, end, exe_self) > 0) {
 		return;
 	}
-	if (buildf(path, start, end, exe_self) > 0) {
-		return;
-	}
 
 	if (exe_self) {
 		printf("Warning: no %s found for %s\n", name, path);

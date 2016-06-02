@@ -5,11 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
-#ifdef MLX_LIBELF_INNER
-#include <libelf/libelf.h>
-#else
 #include <libelf.h>
-#endif
 #include <libunwind-ptrace.h>
 #include <string.h>
 

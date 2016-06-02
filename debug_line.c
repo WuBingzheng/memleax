@@ -69,6 +69,7 @@ static int debug_line_build_file(const char *path, size_t start,
 	}
 	int res = dwarf_init(fd, DW_DLC_READ, 0, 0, &dbg, &error);
 	if(res != DW_DLV_OK) {
+		printf("dwarf_init %s error: %s\n", path, dwarf_errmsg(error));
 		return -1;
 	}
 
