@@ -1,5 +1,5 @@
-#ifndef _MLD_DEBUG_LINE_
-#define _MLD_DEBUG_LINE_
+#ifndef MLD_DEBUG_LINE_H
+#define MLD_DEBUG_LINE_H
 
 #include <stdint.h>
 #include <sys/types.h>

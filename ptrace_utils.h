@@ -1,5 +1,5 @@
-#ifndef _MLD_PTRACE_UTILS_
-#define _MLD_PTRACE_UTILS_
+#ifndef MLD_PTRACE_UTILS_H
+#define MLD_PTRACE_UTILS_H
 
 #include <sys/ptrace.h>
 #include <stdio.h>

@@ -2,8 +2,8 @@
  * Copied from include/linux/list.h
  **/
 
-#ifndef _OHC_LIST_H_
-#define _OHC_LIST_H_
+#ifndef MLD_LIST_H
+#define MLD_LIST_H
 
 #include <stdio.h>
 struct list_head {

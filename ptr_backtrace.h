@@ -1,5 +1,5 @@
-#ifndef _MLD_PTR_BACKTRACE_
-#define _MLD_PTR_BACKTRACE_
+#ifndef MLD_PTR_BACKTRACE_H
+#define MLD_PTR_BACKTRACE_H
 
 #include <libunwind-ptrace.h>
 #include <sys/types.h>

@@ -1,5 +1,5 @@
-#ifndef _MLD_PROC_MAPS_
-#define _MLD_PROC_MAPS_
+#ifndef MLD_PROC_MAPS_H
+#define MLD_PROC_MAPS_H
 
 #include <sys/types.h>
 #include <stddef.h>

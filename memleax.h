@@ -1,5 +1,5 @@
-#ifndef _MEMLEAKDETECTOR_
-#define _MEMLEAKDETECTOR_
+#ifndef MLD_MEMLEAK_H
+#define MLD_MEMLEAK_H
 
 #include <stdint.h>
 

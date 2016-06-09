@@ -1,5 +1,5 @@
-#ifndef _MLD_ARRAY_
-#define _MLD_ARRAY_
+#ifndef MLD_ARRAY_H
+#define MLD_ARRAY_H
 
 struct array_s {
 	int	item_max;

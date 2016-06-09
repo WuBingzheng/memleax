@@ -1,5 +1,5 @@
-#ifndef _MLD_SYMTAB_
-#define _MLD_SYMTAB_
+#ifndef MLD_SYMTAB_H
+#define MLD_SYMTAB_H
 
 #include <stdint.h>
 #include <sys/types.h>

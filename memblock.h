@@ -1,5 +1,5 @@
-#ifndef _MLD_MEMBLOCK_
-#define _MLD_MEMBLOCK_
+#ifndef MLD_MEMBLOCK_H
+#define MLD_MEMBLOCK_H
 
 #include <unistd.h>
 #include <time.h>

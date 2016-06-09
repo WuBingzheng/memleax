@@ -1,5 +1,5 @@
-#ifndef _MLD_callstack_
-#define _MLD_callstack_
+#ifndef MLD_CALLSTACK_H
+#define MLD_CALLSTACK_H
 
 #include "hash.h"
 #include "ptr_backtrace.h"

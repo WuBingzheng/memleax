@@ -1,5 +1,5 @@
-#ifndef _MLD_HASH_
-#define _MLD_HASH_
+#ifndef MLD_HASH_H
+#define MLD_HASH_H
 
 #include "list.h"
 #include <stdint.h>

@@ -1,5 +1,5 @@
-#ifndef _MLD_BREAKPOINT_
-#define _MLD_BREAKPOINT_
+#ifndef MLD_BREAKPOINT_H
+#define MLD_BREAKPOINT_H
 
 #include <sys/types.h>
 
