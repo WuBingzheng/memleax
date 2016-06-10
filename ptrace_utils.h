@@ -46,9 +46,9 @@ static inline int ptrace_new_child(int status)
 {
 	return (status >> 16);
 }
-static inline int ptrace_new_thread(int status)
+static inline int ptrace_new_child_thread(int status)
 {
-	return ((status >> 16) == PTRACE_EVENT_CLONE;
+	return ((status >> 16) == PTRACE_EVENT_CLONE);
 }
 static inline void ptrace_continue(pid_t pid, int signum)
 {

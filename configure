@@ -86,7 +86,7 @@ check_lib()
 			return 0;
 		}
 EOF
-	if ! cc -M $CFLAGS tmp.c >/dev/null 2>&1 ; then
+	if ! cc -MM $CFLAGS tmp.c >/dev/null 2>&1 ; then
 		echo "Error: $lib-devel is missing."
 		rm -f tmp.c
 		exit 1
@@ -109,7 +109,7 @@ check_lib libelf libelf.h "elf_begin(0,0,NULL)"
 
 # - check libdwarf
 if ! $disable_libdwarf; then
-	CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/local/include/libdwarf/"
+	CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/include/libdwarf/"
 	LDLIBS="$LDLIBS -ldwarf"
 	check_lib libdwarf libdwarf.h "dwarf_init(0,0,0,0,NULL,NULL)"
 fi
