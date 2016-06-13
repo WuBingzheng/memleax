@@ -66,6 +66,29 @@ pid_t proc_tasks(pid_t pid)
 	}
 
 	closedir(dirp);
+	dirp = NULL;
+	return 0;
+}
+
+int proc_task_check(pid_t pid, pid_t child)
+{
+	char tname[100];
+	sprintf(tname, "/proc/%d/task", pid);
+	DIR *dirp = opendir(tname);
+	if (dirp == NULL) {
+		perror("Error in open /proc/pid/tasks");
+		exit(3);
+	}
+
+	struct dirent *e;
+	while((e = readdir(dirp)) != NULL) {
+		if (atoi(e->d_name) == child) {
+			closedir(dirp);
+			return 1;
+		}
+	}
+
+	closedir(dirp);
 	return 0;
 }
 #endif /* MLX_LINUX */

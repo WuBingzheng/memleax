@@ -42,13 +42,9 @@ static inline uintptr_t ptrace_get_child(pid_t pid)
 	ptrace(PTRACE_GETEVENTMSG, pid, 0, &child);
 	return child;
 }
-static inline int ptrace_new_child(int status)
+static inline int ptrace_new_child(pid_t pid, int status)
 {
 	return (status >> 16);
-}
-static inline int ptrace_new_child_thread(int status)
-{
-	return ((status >> 16) == PTRACE_EVENT_CLONE);
 }
 static inline void ptrace_continue(pid_t pid, int signum)
 {
@@ -126,13 +122,7 @@ static inline void ptrace_detach(pid_t pid, int signum)
 	ptrace(PT_DETACH, pid, 0, signum);
 }
 
-static inline int ptrace_new_child_first(pid_t pid)
-{
-	struct ptrace_lwpinfo pi;
-	ptrace(PT_LWPINFO, pid, (caddr_t)&pi, sizeof(pi));
-	return (pi.pl_flags & PL_FLAG_CHILD);
-}
-static inline int ptrace_new_child_forked(pid_t pid)
+static inline int ptrace_new_child(pid_t pid, int status)
 {
 	struct ptrace_lwpinfo pi;
 	ptrace(PT_LWPINFO, pid, (caddr_t)&pi, sizeof(pi));

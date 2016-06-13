@@ -207,47 +207,37 @@ int main(int argc, char * const *argv)
 		}
 		int signum = WSTOPSIG(status);
 		if (signum == SIGSTOP) {
-#ifdef MLX_FREEBSD
-			/* fork in FreeBSD: trap at child process first instruction */
-			if (ptrace_new_child_first(pid)) {
-				breakpoint_cleanup(pid);
-				ptrace_detach(pid, 0);
+
+			/* by signal_handler() */
+			if (pid == g_target_pid) {
+				printf("\n== Terminate monitoring.\n");
+				break;
+			}
+
+			/* trap at child's first instruction */
+#ifdef MLX_LINUX
+			if (proc_task_check(g_target_pid, pid)) { /* thread in Linux */
+				log_debug("new thread id=%d\n", pid);
+				ptrace_continue(pid, 0);
 				continue;
 			}
 #endif
-			/* by signal_handler() */
-			printf("\n== Terminate monitoring.\n");
-			break;
+			/* child process, detach it */
+			log_debug("new process id=%d\n", pid);
+			breakpoint_cleanup(pid);
+			ptrace_detach(pid, 0);
+			continue;
 		}
 		if (signum != SIGTRAP) { /* forward signals */
 			ptrace_continue(pid, signum);
 			continue;
 		}
 
-#ifdef MLX_FREEBSD
-		/* fork in FreeBSD: trap because of new child */
-		if (ptrace_new_child_forked(pid)) {
+		/* new child */
+		if (ptrace_new_child(pid, status)) {
 			ptrace_continue(pid, 0);
 			continue;
 		}
-#endif
-#ifdef MLX_LINUX
-		/* new child (thread or process) in Linux */
-		if (ptrace_new_child(status)) {
-			pid_t child = ptrace_get_child(pid);
-			waitpid(child, NULL, __WALL);
-			if (ptrace_new_child_thread(status)) { /* thread */
-				log_debug("new thread id=%d\n", child);
-				ptrace_continue(child, 0);
-			} else { /* process, detach it */
-				log_debug("new process id=%d\n", child);
-				breakpoint_cleanup(child);
-				ptrace_detach(child, 0);
-			}
-			ptrace_continue(pid, 0);
-			continue;
-		}
-#endif
 
 		/* get registers */
 		registers_info_t regs;
