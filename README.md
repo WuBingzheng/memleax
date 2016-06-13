@@ -69,8 +69,8 @@ convenient and suitable for production environment.
 
 ## environment
 
-+ GNU/Linux, x86_64
-+ FreeBSD, amd64
++ GNU/Linux x86_64, test on CentOS 7.2 and Ubuntu 16.04
++ FreeBSD amd64, test on FreeBSD 10.3
 
 
 ## requirement
@@ -78,7 +78,7 @@ convenient and suitable for production environment.
 + libunwind
 + libdwarf, if you do not have this, set `--disable-libdwarf` to `configure` to
   disable it, and you will not see file name and line number in backtrace.
-+ elfutils-libelf, on GNU/Linux, while FreeBSD has libelf already.
++ libelf, on GNU/Linux, while FreeBSD has libelf already.
 
 
 ## usage
