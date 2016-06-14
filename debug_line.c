@@ -4,6 +4,7 @@
 #ifdef MLX_WITH_LIBDWARF
 
 #include <libdwarf.h>
+#include <dwarf.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -15,57 +16,32 @@
 #include "memleax.h"
 #include "proc_info.h"
 
-struct debug_line_s {
-	uintptr_t	address;
-	char		*filename;
-	int		lineno;
+struct dwarf_die_s {
+	Dwarf_Addr	start;
+	Dwarf_Addr	end;
+	Dwarf_Addr	offset;
+	Dwarf_Line	*dw_lines;
+	Dwarf_Signed	dw_line_nr;
+	int		comp_dir_len;
 };
-static ARRAY(g_debug_lines, struct debug_line_s, 1000);
-
-struct address_region_s {
-	uintptr_t	start;
-	uintptr_t	end;
-};
-static ARRAY(g_address_regions, struct address_region_s, 100);
-
-
-static void debug_line_new(Dwarf_Addr pc, Dwarf_Unsigned lineno, const char *filename)
-{
-	struct debug_line_s *dl = array_push(&g_debug_lines);
-	dl->address = pc;
-	dl->lineno = lineno;
-
-	static char *fname_cache1 = "";
-	static char *fname_cache2 = "";
-	if (strcmp(filename, fname_cache1) == 0) {
-		dl->filename = fname_cache1;
-	} else if (strcmp(filename, fname_cache2) == 0) {
-		dl->filename = fname_cache2;
-		char *tmp = fname_cache1;
-		fname_cache1 = fname_cache2;
-		fname_cache2 = tmp;
-	} else {
-		dl->filename = strdup(filename);
-		fname_cache2 = dl->filename;
-	}
-}
+static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
 
 static int debug_line_build_file(const char *path, size_t start,
 		size_t end, int exe_self)
 {
 	uintptr_t offset = exe_self ? 0 : start;
 
-	Dwarf_Debug dbg;
-	Dwarf_Error error;
-	int count = 0;
-
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		return -1;
 	}
+
+	Dwarf_Debug dbg;
+	Dwarf_Error error;
+	int count = 0;
 	int res = dwarf_init(fd, DW_DLC_READ, 0, 0, &dbg, &error);
 	if(res != DW_DLV_OK) {
-		printf("dwarf_init %s error: %s\n", path, dwarf_errmsg(error));
+		printf("Warning: dwarf_init %s error: %s\n", path, dwarf_errmsg(error));
 		return -1;
 	}
 
@@ -73,57 +49,57 @@ static int debug_line_build_file(const char *path, size_t start,
 	while (dwarf_next_cu_header(dbg, NULL, NULL, NULL, NULL,
 				&next_cu_offset, &error) == DW_DLV_OK) {
 
-		Dwarf_Die cu_die = 0;
+		Dwarf_Die cu_die = NULL;
 		if (dwarf_siblingof(dbg, NULL, &cu_die, &error) != DW_DLV_OK) {
-			printf("dwarf_siblingof\n");
-			exit(1);
+			printf("Warning: dwarf_siblingof %s error: %s\n", path, dwarf_errmsg(error));
+			return -1;
 		}
 
 		Dwarf_Signed linecount = 0;
 		Dwarf_Line *linebuf = NULL;
 		res = dwarf_srclines(cu_die, &linebuf, &linecount, &error);
 		if (res == DW_DLV_ERROR) {
-			printf("warning: dwarf_srclines() error: %s\n", dwarf_errmsg(error));
-			break;
+			printf("Warning: dwarf_srclines %s error: %s\n", path, dwarf_errmsg(error));
+			return -1;
 		}
 		if (res == DW_DLV_NO_ENTRY) {
 			continue;
 		}
-
-		Dwarf_Addr pc;
-		char *filename;
-		Dwarf_Unsigned lineno;
-		int i;
-		for (i = 0; i < linecount; i++) {
-			Dwarf_Line line = linebuf[i];
-			res = dwarf_linesrc(line, &filename, &error);
-			res = dwarf_lineaddr(line, &pc, &error);
-			res = dwarf_lineno(line, &lineno, &error);
-			debug_line_new(pc + offset, lineno, filename);
-			count++;
+		if (linecount == 0) {
+			continue;
 		}
 
-		dwarf_srclines_dealloc(dbg, linebuf, linecount);
-		dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
+		/* new dwarf-die */
+		struct dwarf_die_s *dd = array_push(&g_dwarf_dies);
+		dd->dw_lines = linebuf;
+		dd->dw_line_nr = linecount;
+		dd->offset = offset;
+		dwarf_lineaddr(linebuf[0], &dd->start, &error);
+		dwarf_lineaddr(linebuf[linecount - 1], &dd->end, &error);
+		dd->start += offset;
+		dd->end += offset;
+
+		/* get compile directory lenth */
+		Dwarf_Attribute comp_dir_attr = 0;
+		char *dir = NULL;
+		dwarf_attr(cu_die, DW_AT_comp_dir, &comp_dir_attr, &error);
+		dwarf_formstring(comp_dir_attr, &dir, &error);
+		dd->comp_dir_len = strlen(dir);
+		dwarf_dealloc(dbg, comp_dir_attr, DW_DLA_ATTR);
+
+		count++;
 	}
 
-	dwarf_finish(dbg,&error);
+	/* dbg, line and die are used later, so do not dealloc them */
 	close(fd);
-
-	if (count > 0) {
-		struct address_region_s *ar = array_push(&g_address_regions);
-		ar->start = start;
-		ar->end = end;
-	}
-
 	return count;
 }
 
-static int debug_line_cmp(const void *a, const void *b)
+static int dwarf_die_cmp(const void *a, const void *b)
 {
-	const struct debug_line_s *dla = a;
-	const struct debug_line_s *dlb = b;
-	return dla->address < dlb->address ? -1 : 1;
+	const struct dwarf_die_s *dda = a;
+	const struct dwarf_die_s *ddb = b;
+	return dda->start < ddb->start ? -1 : 1;
 }
 
 void debug_line_build(pid_t pid)
@@ -136,38 +112,57 @@ void debug_line_build(pid_t pid)
 				path, start, end, exe_self);
 	}
 
-	array_sort(&g_debug_lines, debug_line_cmp);
+	array_sort(&g_dwarf_dies, dwarf_die_cmp);
 }
 
 
 const char *debug_line_search(uintptr_t address, int *lineno)
 {
-	/* check in address region? */
-	struct address_region_s *ar;
-	array_for_each(ar, &g_address_regions) {
-		if (address >= ar->start && address <= ar->end) {
+	/* search dwarf-die */
+	int min = 0, max = g_dwarf_dies.item_num - 1;
+	struct dwarf_die_s *table = g_dwarf_dies.data;
+	struct dwarf_die_s *dd;
+	while (min <= max) {
+		int mid = (min + max) / 2;
+		dd = &table[mid];
+		if (address < dd->start) {
+			max = mid - 1;
+		} else if (address > dd->end) {
+			min = mid + 1;
+		} else {
 			break;
 		}
 	}
-	if (array_out(ar, &g_address_regions)) {
+	if (min > max) { /* not found */
 		return NULL;
 	}
 
-	/* search */
-	struct debug_line_s *lines = g_debug_lines.data;
-	int min = 0, max = g_debug_lines.item_num - 2;
+	/* search debug-line from dwarf-die */
+	min = 0;
+	max = dd->dw_line_nr - 2;
 	while (min <= max) {
 		int mid = (min + max) / 2;
-		struct debug_line_s *dl = &lines[mid];
-		struct debug_line_s *next = &lines[mid+1];
+		Dwarf_Line line1 = dd->dw_lines[mid];
+		Dwarf_Line line2 = dd->dw_lines[mid+1];
 
-		if (address < dl->address) {
+		Dwarf_Addr addr1, addr2;
+		dwarf_lineaddr(line1, &addr1, NULL);
+		dwarf_lineaddr(line2, &addr2, NULL);
+		addr1 += dd->offset;
+		addr2 += dd->offset;
+
+		if (address < addr1) {
 			max = mid - 1;
-		} else if (address > next->address) {
+		} else if (address > addr2) {
 			min = mid + 1;
 		} else {
-			*lineno = dl->lineno;
-			return dl->filename;
+			Dwarf_Unsigned du_line_no;
+			dwarf_lineno(line1, &du_line_no, NULL);
+			*lineno = du_line_no;
+
+			char *filename;
+			dwarf_linesrc(line1, &filename, NULL);
+			return filename + dd->comp_dir_len + 1;
 		}
 	}
 
