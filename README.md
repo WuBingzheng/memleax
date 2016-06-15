@@ -81,6 +81,15 @@ convenient and suitable for production environment.
 + libelf, on GNU/Linux, while FreeBSD has libelf already.
 
 
+## install
+
+### debian
+
+	sudo apt-get install libunwind-dev libelf-dev libdwarf-dev
+	./configure
+	make && sudo make install
+
+
 ## usage
 
 To detect a running process:
