@@ -1,3 +1,10 @@
+/*
+ * memleax, detects memory leak of running process.
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/stat.h>

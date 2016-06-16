@@ -1,3 +1,10 @@
+/*
+ * simple array utils
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #ifndef MLD_ARRAY_H
 #define MLD_ARRAY_H
 

@@ -1,3 +1,10 @@
+/*
+ * simple hash utils
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #ifndef MLD_HASH_H
 #define MLD_HASH_H
 

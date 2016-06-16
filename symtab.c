@@ -1,3 +1,10 @@
+/*
+ * build symbol table of ELF
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #include <sys/ptrace.h>
 #include <stdlib.h>
 #include <sys/stat.h>

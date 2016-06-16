@@ -1,3 +1,10 @@
+/*
+ * build backtrace by libunwind
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #include <sys/ptrace.h>
 #include <libunwind-ptrace.h>
 #include <stdio.h>

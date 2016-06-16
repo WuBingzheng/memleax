@@ -1,3 +1,10 @@
+/*
+ * build dwarf debug-line by libdwarf
+ *
+ * Author: Wu Bingzheng
+ *   Date: 2016-5
+ */
+
 #include <stdio.h>
 #include "debug_line.h"
 
