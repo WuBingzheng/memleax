@@ -69,15 +69,15 @@ to your scenarios; while the upside is the memory allocation for process
 initialization is skipped, besides of the convenience.</p>
 
 <h2>
-<a id="performace-influence" class="anchor" href="#performace-influence" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>performace influence</h2>
+<a id="performace-impact" class="anchor" href="#performace-impact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>performace impact</h2>
 
 <p>Because target progress's each memory allocation/free API invokes a TRAP, the
-performance influence depends on how often the target program calls memory
+performance impact depends on how often the target program calls memory
 APIs.
 For example, it impacts lightly to nginx with HTTP, while heavily with HTTPS,
 because OpenSSL calls malloc seriously.</p>
 
-<p>Although performance influence is worthy of consideration, since <code>memleax</code> is
+<p>Although performance impact is worthy of consideration, since <code>memleax</code> is
 run to attach the target progress only when you certain it is in memory leak,
 and stopped after real-time memory leak report, so it is not need to attach
 the target progress for long time.</p>
@@ -103,8 +103,8 @@ convenient and suitable for production environment.</p>
 <a id="environment" class="anchor" href="#environment" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>environment</h2>
 
 <ul>
-<li>GNU/Linux, x86_64</li>
-<li>FreeBSD, amd64</li>
+<li>GNU/Linux-x86_64, tested on CentOS 7.2 and Ubuntu 16.04</li>
+<li>FreeBSD-amd64, tested on FreeBSD 10.3</li>
 </ul>
 
 <h2>
@@ -113,30 +113,79 @@ convenient and suitable for production environment.</p>
 <ul>
 <li>libunwind</li>
 <li>libdwarf, if you do not have this, set <code>--disable-libdwarf</code> to <code>configure</code> to
-disable it, and you will not see file name and line number in backtrace.</li>
-<li>elfutils-libelf, on GNU/Linux, while FreeBSD has libelf already.</li>
+disable it, as a result you will not see file name and line number in backtrace.</li>
+<li>libelf, on GNU/Linux, while FreeBSD has libelf already.</li>
 </ul>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h2>
 
-<p>To detect a running process:</p>
+<h3>
+<a id="start" class="anchor" href="#start" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>start</h3>
+
+<p>To debug a running process, run:</p>
 
 <pre><code>$ memleax [options] &lt;target-pid&gt;
 </code></pre>
 
-<p>then <code>memleax</code> monitors the target process, and will report memory leak in real time.</p>
+<p>then <code>memleax</code> begins to monitor the target process, and report memory leak in real time.</p>
 
-<p>It stops monitoring and quits on:</p>
+<h3>
+<a id="wait-and-check-the-report" class="anchor" href="#wait-and-check-the-report" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>wait and check the report</h3>
+
+<p>The memory blocks live longer than the threshold, are showed as:</p>
+
+<pre><code>CallStack[3]: memory expires with 101 bytes, backtrace:
+    0x00007fd322bd8220  malloc()+0
+    0x000000000040084e  foo()+14  foo.c:12
+    0x0000000000400875  bar()+37  xxxxx.c:20
+    0x0000000000400acb  main()+364  test.c:80
+</code></pre>
+
+<p><code>CallStack[3]</code> is the ID of CallStack where memory leak happens.</p>
+
+<p>The backtrace is showed only on the first time, while it only shows the
+ID and counter if expiring again:</p>
+
+<pre><code>CallStack[3]: memory expires with 101 bytes, 2 times again
+</code></pre>
+
+<p>If the expired memory block is freed later, it shows:</p>
+
+<pre><code>CallStack[6]: expired-memory frees after 10 seconds
+</code></pre>
+
+<p>If there are too many expired-memory-blocks are freed on one CallStack,
+this CallStack will not be showed again:</p>
+
+<pre><code>Warning: too many expired-free at CallStack[6]. will not show this CallStack later
+</code></pre>
+
+<p>When you think you have found the answer, stop the debug.</p>
+
+<h3>
+<a id="stop" class="anchor" href="#stop" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>stop</h3>
+
+<p><code>memleax</code> stops monitoring and quits on:</p>
 
 <ul>
-<li>the target process quits,</li>
-<li>
-<code>memleax</code> exits (by SIGKILL or Ctrl-C), or</li>
-<li>the number of leaked memory blocks at one CallStack exceeds 1000 (change this threshold by -n option).</li>
+<li>you stop it, by Ctrl-C or kill,</li>
+<li>the target process quits, or</li>
+<li>too many leaks on one CallStack.</li>
 </ul>
 
-<p>After quiting, it also gives statistics for the CallStacks with memory leak.</p>
+<p>After quiting, it also gives statistics for the CallStacks with memory leak:</p>
+
+<pre><code>CallStack[3]: may-leak=20 (2020 bytes)
+    expired=20 (2020 bytes), free_expired=0 (0 bytes)
+    alloc=20 (2020 bytes), free=0 (0 bytes)
+    freed memory live time: min=0 max=0 average=0
+    un-freed memory live time: max=20
+    0x00007fd322bd8220  malloc()+0
+    0x000000000040084e  foo()+14  foo.c:12
+    0x0000000000400875  bar()+37  xxxxx.c:20
+    0x0000000000400acb  main()+364  test.c:80
+</code></pre>
       </section>
     </div>
 
