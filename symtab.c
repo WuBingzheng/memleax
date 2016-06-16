@@ -22,45 +22,20 @@ struct symbol_s {
 
 static ARRAY(g_symbol_table, struct symbol_s, 1000);
 
-static int symtab_build_file(const char *path, uintptr_t start,
-		uintptr_t end, int exe_self)
+static int symtab_build_section(Elf *elf, Elf_Scn *section, uintptr_t offset)
 {
-	uintptr_t offset = exe_self ? 0 : start;
-	int sh_type = exe_self ? SHT_SYMTAB : SHT_DYNSYM;
-
-	/* open file */
-	elf_version(EV_CURRENT);
-	int fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		return -1;
-	}
-	Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
-	if (elf == NULL) {
-		close(fd);
-		return -1;
+	Elf64_Shdr *shdr = elf64_getshdr(section);
+	if (shdr == NULL) {
+		return 0;
 	}
 
-	/* find symbol section */
-	Elf_Scn* section = NULL;
-	Elf64_Shdr *shdr;
-	while ((section = elf_nextscn(elf, section)) != NULL) {
-		if ((shdr = elf64_getshdr(section)) != NULL
-				&& shdr->sh_type == sh_type) {
-			break;
-		}
-	}
-	if (section == NULL) {
-		elf_end(elf);
-		close(fd);
-		return -1;
+	if (shdr->sh_type != SHT_SYMTAB && shdr->sh_type != SHT_DYNSYM) {
+		return 0;
 	}
 
-	/* build symbol table */
 	Elf_Data *data = elf_getdata(section, NULL);
 	if (data == NULL || data->d_size == 0) {
-		elf_end(elf);
-		close(fd);
-		return -1;
+		return 0;
 	}
 
 	int count = 0;
@@ -86,6 +61,34 @@ static int symtab_build_file(const char *path, uintptr_t start,
 		sym->weak = (ELF64_ST_BIND(esym->st_info) == STB_WEAK);
 
 		count++;
+	}
+	return count;
+}
+
+static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
+{
+	/* open file */
+	int fd = open(path, O_RDONLY);
+	if (fd < 0) {
+		return -1;
+	}
+
+	elf_version(EV_CURRENT);
+	Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
+	if (elf == NULL) {
+		close(fd);
+		return -1;
+	}
+
+	/* get offset */
+	Elf64_Ehdr *hdr = elf64_getehdr(elf);
+	uintptr_t offset = hdr->e_type == ET_EXEC ? 0 : start;
+
+	/* find symbol section */
+	Elf_Scn* section = NULL;
+	int count = 0;
+	while ((section = elf_nextscn(elf, section)) != NULL) {
+		count += symtab_build_section(elf, section, offset);
 	}
 
 	/* clean up */

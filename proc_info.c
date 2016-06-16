@@ -1,20 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
 #include "proc_info.h"
 
 #ifdef MLX_LINUX
 #include <dirent.h>
+#include <unistd.h>
 const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 {
 	static FILE *filp = NULL;
-	static char path[1024];
-
-	/* we assume the first map is exe-self */
-	if (exe_self) {
-		*exe_self = (filp == NULL);
-	}
+	static char exe_name[1024];
+	static char ret_path[1024];
 
 	/* first, init */
 	if (filp == NULL) {
@@ -25,16 +23,28 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 			perror("Error in open /proc/pid/maps");
 			exit(3);
 		}
+
+		sprintf(pname, "/proc/%d/exe", pid);
+		int exe_len = readlink(pname, exe_name, sizeof(exe_name));
+		if (exe_len < 0) {
+			perror("error in open /proc/pid/exe");
+			exit(3);
+		}
+		exe_name[exe_len] = '\0';
 	}
 
+	/* walk through */
 	char line[1024];
 	char perms[5];
 	int ia, ib, ic, id;
 	while (fgets(line, sizeof(line), filp) != NULL) {
 		sscanf(line, "%lx-%lx %s %x %x:%x %d %s",
-				start, end, perms, &ia, &ib, &ic, &id, path);
-		if (perms[2] == 'x' && path[0] == '/') {
-			return path;
+				start, end, perms, &ia, &ib, &ic, &id, ret_path);
+		if (perms[2] == 'x' && ret_path[0] == '/') {
+			if (exe_self != NULL) {
+				*exe_self = (strcmp(ret_path, exe_name) == 0);
+			}
+			return ret_path;
 		}
 	}
 

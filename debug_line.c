@@ -3,6 +3,7 @@
 
 #ifdef MLX_WITH_LIBDWARF
 
+#include <libelf.h>
 #include <libdwarf.h>
 #include <dwarf.h>
 #include <sys/types.h>
@@ -26,16 +27,25 @@ struct dwarf_die_s {
 };
 static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
 
-static int debug_line_build_file(const char *path, size_t start,
-		size_t end, int exe_self)
+static int debug_line_build_file(const char *path, size_t start, size_t end)
 {
-	uintptr_t offset = exe_self ? 0 : start;
-
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		return -1;
 	}
 
+	/* get offset */
+	elf_version(EV_CURRENT);
+	Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
+	if (elf == NULL) {
+		close(fd);
+		return -1;
+	}
+	Elf64_Ehdr *hdr = elf64_getehdr(elf);
+	uintptr_t offset = hdr->e_type == ET_EXEC ? 0 : start;
+	elf_end(elf);
+
+	/* parse debug-line */
 	Dwarf_Debug dbg;
 	Dwarf_Error error;
 	int count = 0;

@@ -26,12 +26,12 @@ static const char *opt_debug_info_file;
 
 
 /* try debug-info-files for buiding some info */
-void try_debug(int (*buildf)(const char*, size_t, size_t, int),
+void try_debug(int (*buildf)(const char*, size_t, size_t),
 		const char *name, const char *path,
 		size_t start, size_t end, int exe_self)
 {
 	if (exe_self && opt_debug_info_file) {
-		if (buildf(opt_debug_info_file, start, end, 1) < 0) {
+		if (buildf(opt_debug_info_file, start, end) < 0) {
 			printf("Error: no %s found in debug-info-file %s.",
 					name, opt_debug_info_file);
 			exit(4);
@@ -39,22 +39,22 @@ void try_debug(int (*buildf)(const char*, size_t, size_t, int),
 		return;
 	}
 
-	if (buildf(path, start, end, exe_self) > 0) {
+	if (buildf(path, start, end) > 0) {
 		return;
 	}
 
 	/* try debug-info-dir */
 	char debug_path[2048];
 	sprintf(debug_path, "%s.debug", path);
-	if (buildf(debug_path, start, end, exe_self) > 0) {
+	if (buildf(debug_path, start, end) > 0) {
 		return;
 	}
 	sprintf(debug_path, "/lib/debug%s.debug", path);
-	if (buildf(debug_path, start, end, exe_self) > 0) {
+	if (buildf(debug_path, start, end) > 0) {
 		return;
 	}
 	sprintf(debug_path, "/usr/lib/debug%s.debug", path);
-	if (buildf(debug_path, start, end, exe_self) > 0) {
+	if (buildf(debug_path, start, end) > 0) {
 		return;
 	}
 

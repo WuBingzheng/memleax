@@ -56,13 +56,13 @@ const char *callstack_string(struct callstack_s *cs)
 
 		const char *proc_name = symtab_by_address(address, &offset);
 		if (proc_name != NULL) {
-			p += sprintf(p, " %s()+%d", proc_name, offset);
+			p += sprintf(p, "  %s()+%d", proc_name, offset);
 		}
 
 		/* @address is return-address, so address-1 is calling-line */
 		const char *file_name = debug_line_search(address - 1, &lineno);
 		if (file_name != NULL) {
-			p += sprintf(p, " %s:%d", file_name, lineno);
+			p += sprintf(p, "  %s:%d", file_name, lineno);
 		}
 
 		p += sprintf(p, "\n");
