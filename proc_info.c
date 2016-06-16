@@ -111,11 +111,7 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 {
 	static struct kinfo_vmentry *freep = NULL;
 	static unsigned int i, cnt;
-
-	/* we assume the first map is exe-self */
-	if (exe_self) {
-		*exe_self = (freep == NULL);
-	}
+	static char *exe_name;
 
 	/* first, init */
 	if (freep == NULL) {
@@ -125,6 +121,7 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 			exit(6);
 		}
 		freep = procstat_getvmmap(procstat_open_sysctl(), ki, &cnt);
+		exe_name = ki->ki_comm;
 	}
 
 	while (i < cnt) {
@@ -132,6 +129,10 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 		if ((kve->kve_protection & KVME_PROT_EXEC) && kve->kve_path[0] == '/') {
 			*start = kve->kve_start;
 			*end = kve->kve_end;
+
+			if (exe_self != NULL) {
+				*exe_self = (strcmp(exe_name, strrchr(kve->kve_path, '/') + 1) == 0);
+			}
 			return kve->kve_path;
 		}
 	}
