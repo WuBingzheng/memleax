@@ -49,7 +49,7 @@ and stopped after real-time memory leak report, so it is not need to attach
 the target progress for long time.
 
 
-## difference with Valgrind
+## difference from Valgrind
 
 + `Valgrind` starts target process, while `memleax` attachs a running process;
 
@@ -67,7 +67,7 @@ In summary, I think `Valgrind` is more powerful, while `memleax` is more
 convenient and suitable for production environment.
 
 
-## environment
+## OS and Machine
 
 + GNU/Linux-x86_64, tested on CentOS 7.2 and Ubuntu 16.04
 + FreeBSD-amd64, tested on FreeBSD 10.3
@@ -75,10 +75,17 @@ convenient and suitable for production environment.
 
 ## requirement
 
-+ libunwind
-+ libdwarf, if you do not have this, set `--disable-libdwarf` to `configure` to
-  disable it, as a result you will not see file name and line number in backtrace.
-+ libelf, on GNU/Linux, while FreeBSD has libelf already.
++ `libunwind`
++ `libelf`
++ `libdw` or `libdwarf`. `libdw` is prefered. They are used to read dwarf debug-line
+information. If you do not have them neither, set `--disable-debug_line` to
+`configure` to disable it. As a result you will not see file name and line
+number in backtrace.
+
+NOTE: On FreeBSD 10.3, there are built-in `libelf` and `libdwarf` already.
+However another `libelf` and `libdwarf` still can be installed by `pkg`.
+`memleax` works with `built-in libelf` and `pkg libdwarf`. So you should
+install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 
 
 ## usage
