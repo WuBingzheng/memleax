@@ -22,6 +22,7 @@
 #include "symtab.h"
 #include "debug_line.h"
 #include "proc_info.h"
+#include "addr_maps.h"
 #include "memleax.h"
 
 uintptr_t g_current_entry;
@@ -151,6 +152,7 @@ int main(int argc, char * const *argv)
 	}
 
 	/* prepare */
+	addr_maps_build(g_target_pid);
 	ptr_maps_build(g_target_pid);
 	symtab_build(g_target_pid);
 	debug_line_build(g_target_pid);

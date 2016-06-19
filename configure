@@ -136,7 +136,7 @@ fi
 
 # check done, generate Makefile
 echo 'generate Makefile...'
-SOURCES="breakpoint.c debug_line.c memleax.c ptr_backtrace.c callstack.c memblock.c proc_info.c symtab.c"
+SOURCES="breakpoint.c debug_line.c memleax.c ptr_backtrace.c callstack.c memblock.c proc_info.c symtab.c addr_maps.c"
 
 cat << EOF > Makefile
 CFLAGS = $CFLAGS -g -O2 -Wall

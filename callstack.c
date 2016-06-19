@@ -14,6 +14,7 @@
 #include "symtab.h"
 #include "callstack.h"
 #include "ptr_backtrace.h"
+#include "addr_maps.h"
 #include "debug_line.h"
 #include "memleax.h"
 #include "memblock.h"
@@ -60,6 +61,8 @@ const char *callstack_string(struct callstack_s *cs)
 		}
 
 		p += sprintf(p, "    0x%016lx", address);
+
+		p += sprintf(p, "  %s", addr_maps_search(address));
 
 		const char *proc_name = symtab_by_address(address, &offset);
 		if (proc_name != NULL) {
