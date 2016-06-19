@@ -1,6 +1,6 @@
 #!/bin/sh
 
-disable_libdwarf=false
+disable_dwarf=false
 prefix='/usr'
 
 # parse options
@@ -8,8 +8,8 @@ for opt in $@; do
 	key=`echo $opt | cut -d'=' -f1`
 	value=`echo $opt | cut -sd'=' -f2`
 	case $key in
-	'--disable-libdwarf')
-		disable_libdwarf=true
+	'--disable-debug_line')
+		disable_dwarf=true
 		;;
 	'--prefix')
 		prefix=$value
@@ -21,8 +21,8 @@ for opt in $@; do
 	'--help')
 		echo "Usage: ./configure [options]"
 		echo "Options:"
-		echo "  --disable-libdwarf"
-		echo "        If you do not have libdwarf, set this to disable it,"
+		echo "  --disable-debug_line"
+		echo "        If you do not have libdw or libdwarf, set this to disable it,"
 		echo "        and you will not see file name and line number in backtrace."
 		echo "  --prefix=<path>"
 		echo "        Set install path. default is '/usr/'."
@@ -51,6 +51,7 @@ case $os_type in
 		exit 2
 	fi
 	CFLAGS="$CFLAGS -DMLX_LINUX"
+	echo "on GNU/Linux."
 	;;
 'FreeBSD')
 	if [ $machine_type != amd64 ] ; then
@@ -61,6 +62,7 @@ case $os_type in
 	LDLIBS="$LDLIBS -lprocstat -lutil"
 	CFLAGS="$CFLAGS -I/usr/local/include/"
 	LDFLAGS="$LDFLAGS -L/usr/local/lib/"
+	echo "on FreeBSD."
 	;;
 *)
 	echo "Error: unsupported OS type: $os_type."
@@ -77,7 +79,10 @@ check_lib()
 	lib=$1
 	header=$2
 	function=$3
+	cflags=$4
+	ldflags=$5
 
+	echo "checking $lib..."
 	cat << EOF > tmp.c
 		#include <$header>
 		#include <stdio.h>
@@ -86,32 +91,46 @@ check_lib()
 			return 0;
 		}
 EOF
-	if ! cc -M $CFLAGS tmp.c >/dev/null 2>&1 ; then
-		echo "Error: $lib-devel is missing."
+	if ! cc -M $CFLAGS $cflags tmp.c >/dev/null 2>&1 ; then
+		echo "$lib-devel is missing."
 		rm -f tmp.c
-		exit 1
+		return 1
 	fi
-	if ! cc $CFLAGS tmp.c -o tmp $LDFLAGS $LDLIBS >/dev/null 2>&1 ; then
-		echo "Error: $lib is missing."
+	if ! cc $CFLAGS $cflags tmp.c -o tmp $LDFLAGS $LDLIBS $ldflags >/dev/null 2>&1 ; then
+		echo "$lib is missing."
 		rm -f tmp.c tmp
-		exit 1
+		return 1
 	fi
 	rm -f tmp.c tmp
+	return 0
 }
 
 # - check libunwind
 LDLIBS="$LDLIBS -lunwind-ptrace -lunwind -lunwind-x86_64"
-check_lib libunwind libunwind.h "unw_create_addr_space(NULL,0)"
+if ! check_lib libunwind libunwind.h "unw_create_addr_space(NULL,0)" ; then
+	echo "Error: libunwind-devel is required."
+	exit 1
+fi
 
 # - check libelf
 LDLIBS="$LDLIBS -lelf"
-check_lib libelf libelf.h "elf_begin(0,0,NULL)"
+if ! check_lib libelf libelf.h "elf_begin(0,0,NULL)" ; then
+	echo "Error: libelf-devel is required."
+	exit 1
+fi
 
 # - check libdwarf
-if ! $disable_libdwarf; then
-	CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/include/libdwarf/"
-	LDLIBS="$LDLIBS -ldwarf"
-	check_lib libdwarf libdwarf.h "dwarf_init(0,0,0,0,NULL,NULL)"
+if ! $disable_dwarf; then
+	if check_lib libdw libdw.h "dwarf_begin(0,0)" "-I/usr/include/elfutils" "-ldw"; then
+		CFLAGS="$CFLAGS -DMLX_WITH_LIBDW -I/usr/include/elfutils/"
+		LDLIBS="$LDLIBS -ldw"
+	elif check_lib libdwarf libdwarf.h "dwarf_init(0,0,0,0,NULL,NULL)" "-I/usr/include/libdwarf" "-ldwarf"; then
+		CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/include/libdwarf/"
+		LDLIBS="$LDLIBS -ldwarf"
+	else
+		echo "Error: libdw or libdwarf is required."
+		echo "Try '--disable-debug_line' to disable it."
+	fi
 fi
 
 
