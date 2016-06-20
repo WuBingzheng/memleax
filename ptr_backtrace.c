@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -40,10 +41,21 @@ static void ptr_maps_build_file(const char *path, size_t start, size_t end)
 	/* read */
 	/* XXX: should parse ELF */
 	int fd = open(path, O_RDONLY);
-	if (read(fd, ms->data, end - start) != end - start) {
-		printf("Error: read map of %s\n", path);
+	if (fd < 0) {
+		printf("Error: open map of %s: %s\n", path, strerror(errno));
 		exit(6);
 	}
+	ssize_t rlen = read(fd, ms->data, end - start);
+	if (rlen < 0) {
+		printf("Error: read map of %s: %s\n", path, strerror(errno));
+		exit(6);
+	}
+	if (end - start - rlen > 4096) {
+		printf("Error: read maps of %s: %ld %ld\n", path, end - start, rlen);
+		exit(6);
+	}
+
+	/* read OK */
 	close(fd);
 }
 

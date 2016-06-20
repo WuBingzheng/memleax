@@ -49,8 +49,9 @@ static int symtab_build_section(Elf *elf, Elf_Scn *section, uintptr_t offset)
 	Elf64_Sym *esym = (Elf64_Sym *)data->d_buf;
 	Elf64_Sym *lastsym = (Elf64_Sym *)((char*) data->d_buf + data->d_size);
 	for (; esym < lastsym; esym++) {
-		if ((esym->st_value == 0) ||
-#ifdef MLX_LINUX
+		if ((esym->st_value == 0) || (esym->st_size == 0) ||
+				(esym->st_shndx == SHN_UNDEF) ||
+#ifdef STB_NUM
 				(ELF64_ST_BIND(esym->st_info) == STB_NUM) ||
 #endif
 				(ELF64_ST_TYPE(esym->st_info) != STT_FUNC)) {
