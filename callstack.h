@@ -20,11 +20,10 @@ struct callstack_s {
 	int		unfree_max;
 
 	int		id;
-	char		*string;
 };
 
 struct callstack_s *callstack_current(void);
-const char *callstack_string(struct callstack_s *cs);
+void callstack_print(struct callstack_s *cs);
 void callstack_report(void);
 
 #endif

@@ -49,13 +49,8 @@ struct callstack_s *callstack_current(void)
 	return cs;
 }
 
-const char *callstack_string(struct callstack_s *cs)
+void callstack_print(struct callstack_s *cs)
 {
-	if (cs->string != NULL) {
-		return cs->string;
-	}
-
-	char buffer[10000], *p = buffer;
 	int offset, lineno, i;
 	for (i = 0; i < cs->ip_num; i++) {
 		uintptr_t address = cs->ips[i];
@@ -63,31 +58,27 @@ const char *callstack_string(struct callstack_s *cs)
 			break;
 		}
 
-		p += sprintf(p, "    0x%016lx", address);
+		printf("    0x%016lx", address);
 
-		p += sprintf(p, "  %s", addr_maps_search(address));
+		printf("  %s", addr_maps_search(address));
 
 		const char *proc_name = symtab_by_address(address, &offset);
 		if (proc_name != NULL) {
-			p += sprintf(p, "  %s()+%d", proc_name, offset);
+			printf("  %s()+%d", proc_name, offset);
 		}
 
 		/* @address is return-address, so address-1 is calling-line */
 		const char *file_name = debug_line_search(address - 1, &lineno);
 		if (file_name != NULL) {
-			p += sprintf(p, "  %s:%d", file_name, lineno);
+			printf("  %s:%d", file_name, lineno);
 		}
 
-		p += sprintf(p, "\n");
+		printf("\n");
 
 		if (proc_name && strcmp(proc_name, "main") == 0) {
 			break;
 		}
 	}
-
-	cs->string = malloc(p - buffer + 1);
-	memcpy(cs->string, buffer, p - buffer + 1);
-	return cs->string;
 }
 
 static int callstack_cmp(const void *a, const void *b)
@@ -119,7 +110,7 @@ void callstack_report(void)
 				"    expired=%d (%d bytes), free_expired=%d (%d bytes)\n"
 				"    alloc=%d (%d bytes), free=%d (%d bytes)\n"
 				"    freed memory live time: min=%d max=%d average=%d\n"
-				"    un-freed memory live time: max=%d\n%s\n",
+				"    un-freed memory live time: max=%d\n",
 				cs->id,
 				cs->expired_count - cs->free_expired_count,
 				cs->expired_size - cs->free_expired_size,
@@ -129,7 +120,8 @@ void callstack_report(void)
 				cs->free_count, cs->free_size,
 				cs->free_min, cs->free_max,
 				cs->free_count ? cs->free_total / cs->free_count : 0,
-				cs->unfree_max,
-				callstack_string(cs));
+				cs->unfree_max);
+		callstack_print(cs);
+		printf("\n");
 	}
 }

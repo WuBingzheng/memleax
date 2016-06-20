@@ -32,8 +32,8 @@ static LIST_HEAD(g_memblock_expire);
 int memblock_new(uintptr_t pointer, size_t size)
 {
 	if (pointer == 0) {
-		printf("Warning: alloc returns NULL at\n%s",
-				callstack_string(callstack_current()));
+		printf("Warning: alloc returns NULL at\n");
+		callstack_print(callstack_current());
 		return 0;
 	}
 
@@ -126,8 +126,9 @@ static void memblock_expire_one(struct memblock_s *mb)
 	static int callstack_id = 1;
 	if (cs->id == 0) { /* first time */
 		cs->id = callstack_id++;
-		printf("CallStack[%d]: memory expires with %ld bytes, backtrace:\n%s",
-				cs->id, mb->size, callstack_string(cs));
+		printf("CallStack[%d]: memory expires with %ld bytes, backtrace:\n",
+				cs->id, mb->size);
+		callstack_print(cs);
 	} else if (cs->free_expired_count < DONOT_SHOW_AFTER_FREE_EXPIRES) {
 		printf("CallStack[%d]: memory expires with %ld bytes, %d times again\n",
 				cs->id, mb->size, cs->expired_count);
