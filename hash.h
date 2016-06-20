@@ -49,4 +49,8 @@ static inline struct hlist_node *hash_search(
 	return NULL;
 }
 
+#define hash_for_each(p, i, hash) \
+	for (i = 0; i < HASH_SIZE; i++) \
+		hlist_for_each(p, &hash[i])
+
 #endif

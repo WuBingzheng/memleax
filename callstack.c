@@ -20,7 +20,6 @@
 #include "memblock.h"
 
 static struct hlist_head g_callstack_hash[HASH_SIZE];
-static ARRAY(g_callstacks, struct callstack_s, 1000);
 
 struct callstack_s *callstack_current(void)
 {
@@ -36,7 +35,7 @@ struct callstack_s *callstack_current(void)
 	}
 
 	/* not found, create new one */
-	struct callstack_s *cs = array_push(&g_callstacks);
+	struct callstack_s *cs = malloc(sizeof(struct callstack_s) + sizeof(unw_word_t) * ip_num);
 	if (cs == NULL) {
 		return NULL;
 	}
@@ -83,8 +82,8 @@ void callstack_print(struct callstack_s *cs)
 
 static int callstack_cmp(const void *a, const void *b)
 {
-	const struct callstack_s *csa = a;
-	const struct callstack_s *csb = b;
+	const struct callstack_s *csa = *(const struct callstack_s **)a;
+	const struct callstack_s *csb = *(const struct callstack_s **)b;
 
 	return (csa->expired_count - csa->free_expired_count)
 			- (csb->expired_count - csb->free_expired_count);
@@ -92,20 +91,34 @@ static int callstack_cmp(const void *a, const void *b)
 void callstack_report(void)
 {
 	memblock_count();
-	array_sort(&g_callstacks, callstack_cmp);
 
-	struct callstack_s *cs = array_last(&g_callstacks);
-	if (cs == NULL || cs->expired_count == 0) {
+	/* sort */
+	ARRAY(callstacks, struct callstack_s *, 1000);
+
+	struct callstack_s **csp;
+	struct callstack_s *cs;
+	struct hlist_node *p;
+	int i;
+	hash_for_each(p, i, g_callstack_hash) {
+		cs = list_entry(p, struct callstack_s, hash_node);
+		if (cs->expired_count == cs->free_expired_count) {
+			continue;
+		}
+		csp = array_push(&callstacks);
+		*csp = cs;
+	}
+
+	if (callstacks.item_num == 0) {
 		printf("== No expired memory blocks.\n\n");
 		return;
 	}
 
-	printf("== Callstack statistics: (in ascending order)\n\n");
-	array_for_each(cs, &g_callstacks) {
-		if (cs->expired_count == cs->free_expired_count) {
-			continue;
-		}
+	array_sort(&callstacks, callstack_cmp);
 
+	/* show */
+	printf("== Callstack statistics: (in ascending order)\n\n");
+	array_for_each(csp, &callstacks) {
+		cs = *csp;
 		printf("CallStack[%d]: may-leak=%d (%d bytes)\n"
 				"    expired=%d (%d bytes), free_expired=%d (%d bytes)\n"
 				"    alloc=%d (%d bytes), free=%d (%d bytes)\n"
