@@ -67,7 +67,7 @@ In summary, I think `Valgrind` is more powerful, while `memleax` is more
 convenient and suitable for production environment.
 
 
-## OS and Machine
+## OS-machine
 
 + GNU/Linux-x86_64, tested on CentOS 7.2 and Ubuntu 16.04
 + FreeBSD-amd64, tested on FreeBSD 10.3

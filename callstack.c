@@ -37,6 +37,9 @@ struct callstack_s *callstack_current(void)
 
 	/* not found, create new one */
 	struct callstack_s *cs = array_push(&g_callstacks);
+	if (cs == NULL) {
+		return NULL;
+	}
 	bzero(cs, sizeof(struct callstack_s));
 
 	memcpy(cs->ips, ips, sizeof(unw_word_t) * ip_num);

@@ -80,7 +80,8 @@ static void signal_handler(int signo)
 int main(int argc, char * const *argv)
 {
 	time_t memory_expire = 5;
-	int stop_number = 1000;
+	int memblock_limit = 1000;
+	int callstack_limit = 1000;
 
 	char *help = "Usage: memleax [options] target-pid\n"
 			"Options:\n"
@@ -88,9 +89,12 @@ int main(int argc, char * const *argv)
 			"      set memory free expire time, default is 5 seconds.\n"
 			"  -d <debug-info-file>\n"
 			"      set debug-info file.\n"
-			"  -n <stop-number>\n"
+			"  -m <memory-block-max>\n"
 			"      stop monitoring if number of expired memory block\n"
-			"      of a CallStack exceeds this one. default is 1000.\n"
+			"      at a same CallStack exceeds this. default is 1000.\n"
+			"  -c <call-stack-max>\n"
+			"      stop monitoring if number of CallStacks with memory\n"
+			"      leak exceeds this. default is 1000.\n"
 			"  -l <backtrace-limit>\n"
 			"      set backtrace deep limit. less backtrace, better\n"
 			"      performace. max is 50, and default is max.\n"
@@ -99,7 +103,7 @@ int main(int argc, char * const *argv)
 
 	/* parse options */
 	int ch;
-	while((ch = getopt(argc, argv, "hve:d:l:n:")) != -1) {
+	while((ch = getopt(argc, argv, "hve:d:l:m:c:")) != -1) {
 		switch(ch) {
 		case 'e':
 			memory_expire = atoi(optarg);
@@ -122,10 +126,17 @@ int main(int argc, char * const *argv)
 				return 1;
 			}
 			break;
-		case 'n':
-			stop_number = atoi(optarg);
-			if (stop_number == 0) {
-				printf("invalid stop_number: %s\n", optarg);
+		case 'm':
+			memblock_limit = atoi(optarg);
+			if (memblock_limit == 0) {
+				printf("invalid memblock_limit: %s\n", optarg);
+				return 1;
+			}
+			break;
+		case 'c':
+			callstack_limit = atoi(optarg);
+			if (callstack_limit == 0) {
+				printf("invalid callstack_limit: %s\n", optarg);
 				return 1;
 			}
 			break;
@@ -285,8 +296,10 @@ int main(int argc, char * const *argv)
 			g_current_entry = bp->entry_address;
 			g_current_thread = pid;
 
-			bp->handler(REG_RAX(regs), arg1, arg2);
 			return_address = 0;
+			if (bp->handler(REG_RAX(regs), arg1, arg2) != 0) {
+				break;
+			}
 
 			/* wakeup one hold-thread */
 			if (hold_thread_num != 0) {
@@ -321,8 +334,7 @@ int main(int argc, char * const *argv)
 			}
 		}
 
-		if (memblock_expire(memory_expire) >= stop_number) {
-			printf("\n== %d expired memory blocks of one CallStack.\n", stop_number);
+		if (memblock_expire(memory_expire, memblock_limit, callstack_limit) < 0) {
 			break;
 		}
 

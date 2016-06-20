@@ -33,6 +33,10 @@ static inline void *array_push(struct array_s *a)
 		a->data = realloc(a->data, a->item_size * a->item_max);
 	}
 
+	if (a->data == NULL) {
+		return NULL;
+	}
+
 	return (char *)a->data + (a->item_size * a->item_num++);
 }
 

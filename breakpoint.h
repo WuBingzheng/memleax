@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-typedef void (*bp_handler_f) (uintptr_t, uintptr_t, uintptr_t);
+typedef int (*bp_handler_f) (uintptr_t, uintptr_t, uintptr_t);
 
 struct breakpoint_s {
 	const char	*name;

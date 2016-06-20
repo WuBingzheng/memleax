@@ -20,37 +20,39 @@
 
 struct breakpoint_s g_breakpoints[4];
 
-static void bph_malloc(uintptr_t pointer, uintptr_t size, uintptr_t none)
+static int bph_malloc(uintptr_t pointer, uintptr_t size, uintptr_t none)
 {
 	log_debug("-- malloc size:%ld ret:%lx\n", size, pointer);
 
-	memblock_new(pointer, size);
+	return memblock_new(pointer, size);
 }
 
-static void bph_free(uintptr_t none1, uintptr_t pointer, uintptr_t none2)
+static int bph_free(uintptr_t none1, uintptr_t pointer, uintptr_t none2)
 {
 	log_debug("-- free point:%lx\n", pointer);
 
 	memblock_delete(memblock_search(pointer));
+	return 0;
 }
 
-static void bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t size)
+static int bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t size)
 {
 	log_debug("-- realloc pointer:%lx->%lx size:%ld\n", old_pointer, new_pointer, size);
 
 	if (new_pointer == old_pointer) {
 		memblock_update_size(memblock_search(old_pointer), size);
+		return 0;
 	} else {
 		memblock_delete(memblock_search(old_pointer));
-		memblock_new(new_pointer, size);
+		return memblock_new(new_pointer, size);
 	}
 }
 
-static void bph_calloc(uintptr_t pointer, uintptr_t nmemb, uintptr_t size)
+static int bph_calloc(uintptr_t pointer, uintptr_t nmemb, uintptr_t size)
 {
 	log_debug("-- calloc pointer:%lx nmemb:%ld size:%ld\n", pointer, nmemb, size);
 
-	memblock_new(pointer, nmemb * size);
+	return memblock_new(pointer, nmemb * size);
 }
 
 

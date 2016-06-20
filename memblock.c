@@ -29,18 +29,24 @@ static struct hlist_head g_memblock_hash[HASH_SIZE];
 static LIST_HEAD(g_memblock_active);
 static LIST_HEAD(g_memblock_expire);
 
-struct memblock_s *memblock_new(uintptr_t pointer, size_t size)
+int memblock_new(uintptr_t pointer, size_t size)
 {
 	if (pointer == 0) {
 		printf("Warning: alloc returns NULL at\n%s",
 				callstack_string(callstack_current()));
-		return NULL;
+		return 0;
 	}
 
 	struct memblock_s *mb = malloc(sizeof(struct memblock_s));
+	if (mb == NULL) {
+		return -1;
+	}
+	mb->callstack = callstack_current();
+	if (mb->callstack == NULL) {
+		return -1;
+	}
 	mb->pointer = pointer;
 	mb->size = size;
-	mb->callstack = callstack_current();
 	mb->create = time(NULL);
 	mb->expired = 0;
 
@@ -49,7 +55,7 @@ struct memblock_s *memblock_new(uintptr_t pointer, size_t size)
 
 	mb->callstack->alloc_count++;
 	mb->callstack->alloc_size += size;
-	return mb;
+	return 0;
 }
 
 #define DONOT_SHOW_AFTER_FREE_EXPIRES 3
@@ -107,9 +113,13 @@ struct memblock_s *memblock_search(uintptr_t pointer)
 
 static void memblock_expire_one(struct memblock_s *mb)
 {
+	/* memblock */
+	mb->expired = 1;
+	list_del(&mb->list_node);
+	list_add_tail(&mb->list_node, &g_memblock_expire);
+
 	/* callstack */
 	struct callstack_s *cs = mb->callstack;
-
 	cs->expired_count++;
 	cs->expired_size += mb->size;
 
@@ -122,19 +132,13 @@ static void memblock_expire_one(struct memblock_s *mb)
 		printf("CallStack[%d]: memory expires with %ld bytes, %d times again\n",
 				cs->id, mb->size, cs->expired_count);
 	}
-
-	/* memblock */
-	mb->expired = 1;
-	list_del(&mb->list_node);
-	list_add_tail(&mb->list_node, &g_memblock_expire);
 }
 
-int memblock_expire(time_t expire)
+int memblock_expire(time_t expire, int memblock_limit, int callstack_limit)
 {
 	time_t now = time(NULL);
 	struct list_head *p, *safe;
 	struct memblock_s *mb;
-	int expired_max = 0;
 	list_for_each_safe(p, safe, &g_memblock_active) {
 		mb = list_entry(p, struct memblock_s, list_node);
 		if (now - mb->create < expire) {
@@ -142,12 +146,22 @@ int memblock_expire(time_t expire)
 		}
 
 		memblock_expire_one(mb);
-		if (mb->callstack->expired_count > expired_max) {
-			expired_max = mb->callstack->expired_count;
+
+		/* check limits */
+		struct callstack_s *cs = mb->callstack;
+		if (cs->id >= callstack_limit + 1) {
+			printf("\n== %d CallStacks gets memory leak.\n", callstack_limit);
+			printf("-- Maybe you should set bigger expired time by `-e`.\n");
+			return -1;
+		}
+		if (cs->expired_count >= memblock_limit) {
+			printf("\n== %d memory blocks leaked at CallStack[%d].\n",
+					memblock_limit, cs->id);
+			return -1;
 		}
 	}
 
-	return expired_max;
+	return 0;
 }
 
 void memblock_count(void)
