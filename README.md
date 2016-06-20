@@ -41,7 +41,7 @@ Because target progress's each memory allocation/free API invokes a TRAP, the
 performance impact depends on how often the target program calls memory
 APIs.
 For example, it impacts lightly to nginx with HTTP, while heavily with HTTPS,
-because OpenSSL calls malloc seriously.
+because OpenSSL calls malloc terribly.
 
 Although performance impact is worthy of consideration, since `memleax` is
 run to attach the target progress only when you certain it is in memory leak,
