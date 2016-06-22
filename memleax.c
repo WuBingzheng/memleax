@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "breakpoint.h"
 #include "ptrace_utils.h"
@@ -30,6 +31,7 @@ pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
 
 static pid_t g_target_pid;
+static int g_signo = 0;
 static const char *opt_debug_info_file;
 
 
@@ -55,14 +57,14 @@ void try_debug(int (*buildf)(const char*, size_t, size_t),
 	char debug_path[2048];
 	sprintf(debug_path, "%s.debug", path);
 	if (buildf(debug_path, start, end) > 0) {
-		return;
-	}
-	sprintf(debug_path, "/lib/debug%s.debug", path);
-	if (buildf(debug_path, start, end) > 0) {
+		printf("Warning: use %s for %s when reading %s.\n",
+				debug_path, path, name);
 		return;
 	}
 	sprintf(debug_path, "/usr/lib/debug%s.debug", path);
 	if (buildf(debug_path, start, end) > 0) {
+		printf("Warning: use %s for %s when reading %s.\n",
+				debug_path, path, name);
 		return;
 	}
 
@@ -74,6 +76,7 @@ void try_debug(int (*buildf)(const char*, size_t, size_t),
 
 static void signal_handler(int signo)
 {
+	g_signo = signo;
 	kill(g_target_pid, SIGSTOP);
 }
 
@@ -192,12 +195,14 @@ int main(int argc, char * const *argv)
 	ptrace_continue(g_target_pid, 0);
 
 	/* signals */
+	signal(SIGHUP, signal_handler);
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
+	signal(SIGALRM, signal_handler);
 
 	/* begin work */
 	printf("== Begin monitoring process %d...\n", g_target_pid);
-	time_t begin = time(NULL);
+	time_t next, begin = time(NULL);
 	struct breakpoint_s *bp = NULL;
 	uintptr_t return_address = 0, return_code = 0;
 	uintptr_t arg1 = 0, arg2 = 0;
@@ -215,6 +220,9 @@ int main(int argc, char * const *argv)
 #endif
 		log_debug("wait: pid=%d status=%x\n", pid, status);
 		if (pid < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
 			perror("\n== Error on waitpid()");
 			break;
 		}
@@ -229,24 +237,28 @@ int main(int argc, char * const *argv)
 		if (signum == SIGSTOP) {
 
 			/* by signal_handler() */
-			if (pid == g_target_pid) {
+			if (g_signo == SIGALRM) {
+				g_signo = 0;
+				goto lexpire;
+			} else if (g_signo != 0) { /* SIGINT SIGHUP SIGTERM */
 				printf("\n== Terminate monitoring.\n");
 				break;
 			}
 
 			/* trap at child's first instruction */
 #ifdef MLX_LINUX
-			if (proc_task_check(g_target_pid, pid)) { /* thread in Linux */
+			else if (proc_task_check(g_target_pid, pid)) { /* thread in Linux */
 				log_debug("new thread id=%d\n", pid);
 				ptrace_continue(pid, 0);
 				continue;
 			}
 #endif
-			/* child process, detach it */
-			log_debug("new process id=%d\n", pid);
-			breakpoint_cleanup(pid);
-			ptrace_detach(pid, 0);
-			continue;
+			else { /* child process, detach it */
+				log_debug("new process id=%d\n", pid);
+				breakpoint_cleanup(pid);
+				ptrace_detach(pid, 0);
+				continue;
+			}
 		}
 		if (signum != SIGTRAP) { /* forward signals */
 			ptrace_continue(pid, signum);
@@ -334,9 +346,12 @@ int main(int argc, char * const *argv)
 			}
 		}
 
-		if (memblock_expire(memory_expire, memblock_limit, callstack_limit) < 0) {
+lexpire:
+		next = memblock_expire(memory_expire, memblock_limit, callstack_limit);
+		if (next < 0) { /* too many memory-blocks or callstacks */
 			break;
 		}
+		alarm(next);
 
 		ptrace_continue(pid, 0);
 	}

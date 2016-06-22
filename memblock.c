@@ -143,7 +143,7 @@ int memblock_expire(time_t expire, int memblock_limit, int callstack_limit)
 	list_for_each_safe(p, safe, &g_memblock_active) {
 		mb = list_entry(p, struct memblock_s, list_node);
 		if (now - mb->create < expire) {
-			break;
+			return expire - (now - mb->create) + 1;
 		}
 
 		memblock_expire_one(mb);
