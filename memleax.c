@@ -43,14 +43,14 @@ static void signal_handler(int signo)
 
 int main(int argc, char * const *argv)
 {
-	time_t memory_expire = 5;
+	time_t memory_expire = 100;
 	int memblock_limit = 1000;
 	int callstack_limit = 1000;
 
 	char *help = "Usage: memleax [options] target-pid\n"
 			"Options:\n"
 			"  -e <expire>\n"
-			"      set memory free expire time, default is 5 seconds.\n"
+			"      set memory free expire time, default is 100 seconds.\n"
 			"  -d <debug-info-file>\n"
 			"      set debug-info file.\n"
 			"  -m <memory-block-max>\n"
@@ -108,7 +108,7 @@ int main(int argc, char * const *argv)
 			printf("%s", help);
 			return 0;
 		case 'v':
-			printf("Version: 0.3.1\n");
+			printf("Version: 0.4\n");
 			printf("Author: Wu Bingzheng\n");
 			return 0;
 		default:
