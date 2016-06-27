@@ -19,6 +19,7 @@
 #include "array.h"
 #include "memleax.h"
 #include "proc_info.h"
+#include "debug_file.h"
 
 struct symbol_s {
 	uintptr_t	address;
@@ -114,13 +115,19 @@ static int symbol_cmp(const void *a, const void *b)
 
 void symtab_build(pid_t pid)
 {
-	const char *path;
+	const char *path, *debugp;
 	size_t start, end;
 	int exe_self;
-
 	while ((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
-		try_debug(symtab_build_file, "symbol table",
-				path, start, end, exe_self);
+		debug_try_init(path, exe_self);
+		while ((debugp = debug_try_get()) != NULL) {
+			if (symtab_build_file(debugp, start, end) > 0) {
+				break;
+			}
+		}
+		if (exe_self && debugp == NULL) {
+			printf("Warning: no symbol table found for %s\n", path);
+		}
 	}
 
 	/* finish */

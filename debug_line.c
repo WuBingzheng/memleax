@@ -22,6 +22,7 @@
 #include "array.h"
 #include "memleax.h"
 #include "proc_info.h"
+#include "debug_file.h"
 
 #if defined(MLX_WITH_LIBDW) /* MLX_WITH_LIBDW */
 #include <libdw.h>
@@ -252,12 +253,19 @@ static int dwarf_die_cmp(const void *a, const void *b)
 
 void debug_line_build(pid_t pid)
 {
-	const char *path;
+	const char *path, *debugp;
 	size_t start, end;
 	int exe_self;
 	while ((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
-		try_debug(debug_line_build_file, "debug info",
-				path, start, end, exe_self);
+		debug_try_init(path, exe_self);
+		while ((debugp = debug_try_get()) != NULL) {
+			if (debug_line_build_file(debugp, start, end) > 0) {
+				break;
+			}
+		}
+		if (exe_self && debugp == NULL) {
+			printf("Warning: no debug-line found for %s\n", path);
+		}
 	}
 
 	array_sort(&g_dwarf_dies, dwarf_die_cmp);

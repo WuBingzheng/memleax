@@ -29,49 +29,10 @@
 uintptr_t g_current_entry;
 pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
+const char *opt_debug_info_file;
 
 static pid_t g_target_pid;
 static int g_signo = 0;
-static const char *opt_debug_info_file;
-
-
-/* try debug-info-files for buiding some info */
-void try_debug(int (*buildf)(const char*, size_t, size_t),
-		const char *name, const char *path,
-		size_t start, size_t end, int exe_self)
-{
-	if (exe_self && opt_debug_info_file) {
-		if (buildf(opt_debug_info_file, start, end) < 0) {
-			printf("Error: no %s found in debug-info-file %s.",
-					name, opt_debug_info_file);
-			exit(4);
-		}
-		return;
-	}
-
-	if (buildf(path, start, end) > 0) {
-		return;
-	}
-
-	/* try debug-info-dir */
-	char debug_path[2048];
-	sprintf(debug_path, "%s.debug", path);
-	if (buildf(debug_path, start, end) > 0) {
-		printf("Warning: use %s for %s when reading %s.\n",
-				debug_path, path, name);
-		return;
-	}
-	sprintf(debug_path, "/usr/lib/debug%s.debug", path);
-	if (buildf(debug_path, start, end) > 0) {
-		printf("Warning: use %s for %s when reading %s.\n",
-				debug_path, path, name);
-		return;
-	}
-
-	if (exe_self) {
-		printf("Warning: no %s found for %s\n", name, path);
-	}
-}
 
 
 static void signal_handler(int signo)
@@ -310,6 +271,7 @@ int main(int argc, char * const *argv)
 
 			return_address = 0;
 			if (bp->handler(REG_RAX(regs), arg1, arg2) != 0) {
+				printf("\n== Not enough memory.\n");
 				break;
 			}
 
