@@ -69,6 +69,7 @@ void callstack_print(struct callstack_s *cs)
 		/* @address is return-address, so address-1 is calling-line */
 		const char *file_name = debug_line_search(address - 1, &lineno);
 		if (file_name != NULL) {
+			if (proc_name == NULL) printf("  ?()");
 			printf("  %s:%d", file_name, lineno);
 		}
 

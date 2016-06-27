@@ -237,7 +237,7 @@ const char *debug_try_get(void)
 		g_index = 3;
 		if (g_buildid_len != 0) {
 			char *p = debug_path;
-			p += sprintf(debug_path, "/usr/lib/debug/.debug-id/%02x/", g_build_id[0]);
+			p += sprintf(debug_path, "/usr/lib/debug/.build-id/%02x/", g_build_id[0]);
 			int i;
 			for (i = 1; i < g_buildid_len; i++) {
 				p += sprintf(p, "%02x", g_build_id[i]);
