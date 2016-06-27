@@ -5,7 +5,7 @@ Summary: memleax detects memory leak of a running process
 Group:  Development/Debuggers
 URL: https://github.com/WuBingzheng/memleax
 Vendor: Wu Bingzheng
-Version: 0.3.1
+Version: 0.4
 
 License: GPL
 Release: 1.el7
