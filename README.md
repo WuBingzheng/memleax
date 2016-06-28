@@ -98,6 +98,12 @@ To debug a running process, run:
 
 then `memleax` begins to monitor the target process, and report memory leak in real time.
 
+You should always set expire time by `-e` options according to your program.
+For example, if you are debugging a HTTP server with keepalive, and there are
+connections last for more than 5 minutes, you should set `-e 360` to cover it.
+If your program is expected to free every memory in 1 second, you should set `-e 2`
+to get report in time.
+
 ### wait and check the report
 
 The memory blocks live longer than the threshold, are showed as:
