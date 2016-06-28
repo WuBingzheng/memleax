@@ -175,11 +175,8 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 		Dwarf_Attribute comp_dir_attr = 0;
 		char *dir = NULL;
 		dwarf_attr(cu_die, DW_AT_comp_dir, &comp_dir_attr, &error);
-		if(dwarf_formstring(comp_dir_attr, &dir, &error) != DW_DLV_OK) {
-			printf("Warning: dwarf_formstring error: %s\n", dwarf_errmsg(error));
-			return -1;
-		}
-		dd->comp_dir_len = strlen(dir);
+		dwarf_formstring(comp_dir_attr, &dir, &error);
+		dd->comp_dir_len = dir ? strlen(dir) + 1 : 0;
 		dwarf_dealloc(dbg, comp_dir_attr, DW_DLA_ATTR);
 
 		count++;
@@ -216,7 +213,7 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 
                         char *filename;
                         dwarf_linesrc(line1, &filename, NULL);
-                        return filename + dd->comp_dir_len + 1;
+                        return filename + dd->comp_dir_len;
                 }
         }
 
