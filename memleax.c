@@ -51,6 +51,7 @@ int main(int argc, char * const *argv)
 			"Options:\n"
 			"  -e <expire>\n"
 			"      set memory free expire time, default is 100 seconds.\n"
+			"      you should always set this according to your scenarios.\n"
 			"  -d <debug-info-file>\n"
 			"      set debug-info file.\n"
 			"  -m <memory-block-max>\n"
@@ -326,7 +327,7 @@ lexpire:
 
 	ptrace_detach(g_target_pid, 0);
 
-	if (time(NULL) - begin <= memory_expire) {
+	if (time(NULL) - begin < memory_expire) {
 		printf("== Your monitoring time is too short. "
 				"%ld seconds is need.\n", memory_expire);
 		return 2;

@@ -160,7 +160,7 @@ clean :
 
 install :
 	mkdir -p $(PREFIX)/bin/
-	cp $(TARGET) $(PREFIX)/bin/
+	install $(TARGET) $(PREFIX)/bin/
 uninstall :
 	rm -f $(PREFIX)/bin/$(TARGET)
 

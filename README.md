@@ -9,7 +9,7 @@ Once I met a memory leak problem in production environment.
 The process began memory leak after long-time running. If using current
 memory debuggers, such as `Valgrind`, I have to restart the target process
 and wait for several days again. Besides it impacts the target process
-much for several days, which is not good for production environment.
+much for several days, which is not good for production.
 
 So I need a tool to debug a running process without restarting it.
 I searched the internet but didn't find one. Then I wrote such a tool myself.
@@ -30,9 +30,6 @@ leak report, and then kill it (e.g. by Ctrl-C) to stop monitoring.
 
 NOTE: Since `memleax` does not run along with the whole life of target
 process, it assumes the long-live memory blocks are memory leak.
-Downside is you have to set the expire threshold by -e option according
-to your scenarios; while the upside is the memory allocation for process
-initialization is skipped, besides of the convenience.
 
 
 ## performace impact
@@ -55,6 +52,9 @@ the target progress for long time.
 
 + `Valgrind` gives memory leak report on quiting, while `memleax` assumes
 that long-living memory blocks are leaks, so it reports in real time;
+
++ `Valgrind` reports all unfreed memory include program init, while `memleax`
+reports only after attaching, skipping the init phase;
 
 + `Valgrind` runs target process on its virtual CPU, which makes it slow.
 While `memleax` hooks memory APIs, which *maybe* less slow, if the target process
@@ -88,6 +88,11 @@ However another `libelf` and `libdwarf` still can be installed by `pkg`.
 install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 
 
+## licence
+
+GPLv2
+
+
 ## usage
 
 ### start
@@ -98,7 +103,7 @@ To debug a running process, run:
 
 then `memleax` begins to monitor the target process, and report memory leak in real time.
 
-You should always set expire time by `-e` options according to your program.
+You should always set expire time by `-e` options according to your scenarios.
 For example, if you are debugging a HTTP server with keepalive, and there are
 connections last for more than 5 minutes, you should set `-e 360` to cover it.
 If your program is expected to free every memory in 1 second, you should set `-e 2`
