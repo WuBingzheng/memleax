@@ -43,14 +43,14 @@ static void signal_handler(int signo)
 
 int main(int argc, char * const *argv)
 {
-	time_t memory_expire = 100;
+	time_t memory_expire = 10;
 	int memblock_limit = 1000;
 	int callstack_limit = 1000;
 
 	char *help = "Usage: memleax [options] target-pid\n"
 			"Options:\n"
 			"  -e <expire>\n"
-			"      set memory free expire time, default is 100 seconds.\n"
+			"      set memory free expire time, default is 10 seconds.\n"
 			"      you should always set this according to your scenarios.\n"
 			"  -d <debug-info-file>\n"
 			"      set debug-info file.\n"

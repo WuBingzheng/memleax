@@ -21,7 +21,7 @@ Hope this is useful for others.
 
 `memleax` attachs a running process, hooks memory allocate/free APIs,
 records all memory blocks, and reports the blocks which live longer
-than 100 seconds (you can change this time by -e option) in real time.
+than 10 seconds (you can change this time by -e option) in real time.
 
 It is very *convenient* to use, and suitable for production environment.
 There is no need to recompile the program or restart the target process.
