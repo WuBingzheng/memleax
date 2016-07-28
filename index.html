@@ -51,11 +51,23 @@ I searched the internet but didn't find one. Then I wrote such a tool myself.</p
 <p>Hope this is useful for others.</p>
 
 <h2>
+<a id="status" class="anchor" href="#status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>status</h2>
+
+<p>Stable and completed.</p>
+
+<p><code>memleax</code> is a tool with single and clear aim. There is
+no bug to fix and no new feature to add by now.</p>
+
+<p>However if you get any new feature or bug, please report
+to <a href="https://github.com/WuBingzheng/memleax">gitlab</a>,
+or mail to <a href="mailto:wubingzheng@gmail.com">wubingzheng@gmail.com</a>.</p>
+
+<h2>
 <a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>how it works</h2>
 
 <p><code>memleax</code> attachs a running process, hooks memory allocate/free APIs,
 records all memory blocks, and reports the blocks which live longer
-than 100 seconds (you can change this time by -e option) in real time.</p>
+than 10 seconds (you can change this time by -e option) in real time.</p>
 
 <p>It is very <em>convenient</em> to use, and suitable for production environment.
 There is no need to recompile the program or restart the target process.
@@ -99,6 +111,16 @@ only detects memory leak.</p></li>
 convenient and suitable for production environment.</p>
 
 <h2>
+<a id="licence" class="anchor" href="#licence" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>licence</h2>
+
+<p>GPLv2</p>
+
+<h2>
+<a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>download</h2>
+
+<p><a href="https://github.com/WuBingzheng/memleax/releases/tag/v1.0">lastest release</a></p>
+
+<h2>
 <a id="os-machine" class="anchor" href="#os-machine" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>OS-machine</h2>
 
 <ul>
@@ -125,9 +147,14 @@ However another <code>libelf</code> and <code>libdwarf</code> still can be insta
 install <code>libdwarf</code> by <code>pkg</code>, and must not install <code>libelf</code> by <code>pkg</code>.</p>
 
 <h2>
-<a id="licence" class="anchor" href="#licence" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>licence</h2>
+<a id="build" class="anchor" href="#build" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build</h2>
 
-<p>GPLv2</p>
+<p>After all required libraries are installed, run</p>
+
+<pre><code>$ configure
+$ make
+$ sudo make install
+</code></pre>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h2>
@@ -154,10 +181,10 @@ to get report in time.</p>
 <p>The memory blocks live longer than the threshold, are showed as:</p>
 
 <pre><code>CallStack[3]: memory expires with 101 bytes, backtrace:
-    0x00007fd322bd8220  malloc()+0
-    0x000000000040084e  foo()+14  foo.c:12
-    0x0000000000400875  bar()+37  xxxxx.c:20
-    0x0000000000400acb  main()+364  test.c:80
+    0x00007fd322bd8220  libc-2.17.so  malloc()+0
+    0x000000000040084e  test  foo()+14  foo.c:12
+    0x0000000000400875  test  bar()+37  bar.c:20
+    0x0000000000400acb  test  main()+364  test.c:80
 </code></pre>
 
 <p><code>CallStack[3]</code> is the ID of CallStack where memory leak happens.</p>
@@ -184,12 +211,13 @@ this CallStack will not be showed again:</p>
 <h3>
 <a id="stop" class="anchor" href="#stop" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>stop</h3>
 
-<p><code>memleax</code> stops monitoring and quits on:</p>
+<p><code>memleax</code> quits on:</p>
 
 <ul>
 <li>you stop it, by Ctrl-C or kill,</li>
-<li>the target process quits, or</li>
-<li>too many leaks on one CallStack.</li>
+<li>the target process quits,</li>
+<li>too many leaks at one CallStack (option -m), or</li>
+<li>too many CallStacks with memory leak (option -c).</li>
 </ul>
 
 <p>After quiting, it also gives statistics for the CallStacks with memory leak:</p>
@@ -199,10 +227,10 @@ this CallStack will not be showed again:</p>
     alloc=20 (2020 bytes), free=0 (0 bytes)
     freed memory live time: min=0 max=0 average=0
     un-freed memory live time: max=20
-    0x00007fd322bd8220  malloc()+0
-    0x000000000040084e  foo()+14  foo.c:12
-    0x0000000000400875  bar()+37  xxxxx.c:20
-    0x0000000000400acb  main()+364  test.c:80
+    0x00007fd322bd8220  libc-2.17.so  malloc()+0
+    0x000000000040084e  test  foo()+14  foo.c:12
+    0x0000000000400875  test  bar()+37  bar.c:20
+    0x0000000000400acb  test  main()+364  test.c:80
 </code></pre>
       </section>
     </div>
