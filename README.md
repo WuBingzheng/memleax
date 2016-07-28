@@ -17,6 +17,18 @@ I searched the internet but didn't find one. Then I wrote such a tool myself.
 Hope this is useful for others.
 
 
+## status
+
+Stable and completed.
+
+`memleax` is a tool with single and clear aim. There is
+no bug to fix and no new feature to add by now.
+
+However if you get any new feature or bug, please report
+to [gitlab] (https://github.com/WuBingzheng/memleax),
+or mail to <mailto:wubingzheng@gmail.com>.
+
+
 ## how it works
 
 `memleax` attachs a running process, hooks memory allocate/free APIs,
@@ -67,6 +79,11 @@ In summary, I think `Valgrind` is more powerful, while `memleax` is more
 convenient and suitable for production environment.
 
 
+## licence
+
+GPLv2
+
+
 ## OS-machine
 
 + GNU/Linux-x86_64, tested on CentOS 7.2 and Ubuntu 16.04
@@ -88,9 +105,13 @@ However another `libelf` and `libdwarf` still can be installed by `pkg`.
 install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 
 
-## licence
+## build
 
-GPLv2
+After all required libraries are installed, run
+
+    $ configure
+    $ make
+    $ sudo make install
 
 
 ## usage
@@ -114,10 +135,10 @@ to get report in time.
 The memory blocks live longer than the threshold, are showed as:
 
     CallStack[3]: memory expires with 101 bytes, backtrace:
-        0x00007fd322bd8220  malloc()+0
-        0x000000000040084e  foo()+14  foo.c:12
-        0x0000000000400875  bar()+37  xxxxx.c:20
-        0x0000000000400acb  main()+364  test.c:80
+        0x00007fd322bd8220  libc-2.17.so  malloc()+0
+        0x000000000040084e  test  foo()+14  foo.c:12
+        0x0000000000400875  test  bar()+37  bar.c:20
+        0x0000000000400acb  test  main()+364  test.c:80
 
 `CallStack[3]` is the ID of CallStack where memory leak happens.
 
@@ -139,11 +160,12 @@ When you think you have found the answer, stop the debug.
 
 ### stop
 
-`memleax` stops monitoring and quits on:
+`memleax` quits on:
 
 * you stop it, by Ctrl-C or kill,
-* the target process quits, or
-* too many leaks on one CallStack.
+* the target process quits,
+* too many leaks at one CallStack (option -m), or
+* too many CallStacks with memory leak (option -c).
 
 After quiting, it also gives statistics for the CallStacks with memory leak:
 
@@ -152,7 +174,7 @@ After quiting, it also gives statistics for the CallStacks with memory leak:
         alloc=20 (2020 bytes), free=0 (0 bytes)
         freed memory live time: min=0 max=0 average=0
         un-freed memory live time: max=20
-        0x00007fd322bd8220  malloc()+0
-        0x000000000040084e  foo()+14  foo.c:12
-        0x0000000000400875  bar()+37  xxxxx.c:20
-        0x0000000000400acb  main()+364  test.c:80
+        0x00007fd322bd8220  libc-2.17.so  malloc()+0
+        0x000000000040084e  test  foo()+14  foo.c:12
+        0x0000000000400875  test  bar()+37  bar.c:20
+        0x0000000000400acb  test  main()+364  test.c:80
