@@ -171,7 +171,7 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 		dd->start += offset;
 		dd->end += offset;
 
-		/* get compile directory lenth */
+		/* get compile directory length */
 		Dwarf_Attribute comp_dir_attr = 0;
 		char *dir = NULL;
 		dwarf_attr(cu_die, DW_AT_comp_dir, &comp_dir_attr, &error);
