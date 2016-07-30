@@ -40,7 +40,7 @@
 <a id="why-write-this" class="anchor" href="#why-write-this" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>why write this</h2>
 
 <p>Once I met a memory leak problem in production environment.
-The process began memory leak after long-time running. If using current
+The process began leaking memory after long-time running. If using current
 memory debuggers, such as <code>Valgrind</code>, I have to restart the target process
 and wait for several days again. Besides it impacts the target process
 much for several days, which is not good for production.</p>
@@ -59,13 +59,13 @@ I searched the internet but didn't find one. Then I wrote such a tool myself.</p
 no bug to fix and no new feature to add by now.</p>
 
 <p>However if you get any new feature or bug, please report
-to <a href="https://github.com/WuBingzheng/memleax">gitlab</a>,
+to <a href="https://github.com/WuBingzheng/memleax">GitHub</a>,
 or mail to <a href="mailto:wubingzheng@gmail.com">wubingzheng@gmail.com</a>.</p>
 
 <h2>
 <a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>how it works</h2>
 
-<p><code>memleax</code> attachs a running process, hooks memory allocate/free APIs,
+<p><code>memleax</code> attaches to a running process, hooks memory allocate/free APIs,
 records all memory blocks, and reports the blocks which live longer
 than 10 seconds (you can change this time by -e option) in real time.</p>
 
@@ -75,33 +75,33 @@ You run <code>memleax</code> to monitor the target process, wait for the real-ti
 leak report, and then kill it (e.g. by Ctrl-C) to stop monitoring.</p>
 
 <p>NOTE: Since <code>memleax</code> does not run along with the whole life of target
-process, it assumes the long-live memory blocks are memory leak.</p>
+process, it assumes the long-lived memory blocks are memory leaks.</p>
 
 <h2>
-<a id="performace-impact" class="anchor" href="#performace-impact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>performace impact</h2>
+<a id="performance-impact" class="anchor" href="#performance-impact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>performance impact</h2>
 
-<p>Because target progress's each memory allocation/free API invokes a TRAP, the
+<p>Because target process's each memory allocation/free API invokes a TRAP, the
 performance impact depends on how often the target program calls memory
 APIs.
 For example, it impacts lightly to nginx with HTTP, while heavily with HTTPS,
 because OpenSSL calls malloc terribly.</p>
 
 <p>Although performance impact is worthy of consideration, since <code>memleax</code> is
-run to attach the target progress only when you certain it is in memory leak,
-and stopped after real-time memory leak report, so it is not need to attach
-the target progress for long time.</p>
+run to attach to the target process only when you are certain it is in memory leak,
+and stopped after real-time memory leak report, it is not needed to attach to
+the target process for long time.</p>
 
 <h2>
 <a id="difference-from-valgrind" class="anchor" href="#difference-from-valgrind" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>difference from Valgrind</h2>
 
 <ul>
-<li><p><code>Valgrind</code> starts target process, while <code>memleax</code> attachs a running process;</p></li>
-<li><p><code>Valgrind</code> gives memory leak report on quiting, while <code>memleax</code> assumes
+<li><p><code>Valgrind</code> starts target process, while <code>memleax</code> attaches to a running process;</p></li>
+<li><p><code>Valgrind</code> gives memory leak report on quitting, while <code>memleax</code> assumes
 that long-living memory blocks are leaks, so it reports in real time;</p></li>
 <li><p><code>Valgrind</code> reports all unfreed memory include program init, while <code>memleax</code>
 reports only after attaching, skipping the init phase;</p></li>
 <li><p><code>Valgrind</code> runs target process on its virtual CPU, which makes it slow.
-While <code>memleax</code> hooks memory APIs, which <em>maybe</em> less slow, if the target process
+While <code>memleax</code> hooks memory APIs, which <em>may be</em> less slow if the target process
 call memory APIs not often.</p></li>
 <li><p><code>Valgrind</code> debugs kinds of memory bugs, while <code>memleax</code> is lightweight and
 only detects memory leak.</p></li>
@@ -126,7 +126,11 @@ convenient and suitable for production environment.</p>
 <h2>
 <a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>download</h2>
 
-<p><a href="https://github.com/WuBingzheng/memleax/releases/tag/v1.0">latest release</a></p>
+<ul>
+<li><a href="https://github.com/WuBingzheng/memleax/releases/tag/v1.0">latest release</a></li>
+<li>source code in <a href="https://github.com/WuBingzheng/memleax/">GitHub</a>
+</li>
+</ul>
 
 <h2>
 <a id="requirement" class="anchor" href="#requirement" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>requirement</h2>
@@ -135,7 +139,7 @@ convenient and suitable for production environment.</p>
 <li><code>libunwind</code></li>
 <li><code>libelf</code></li>
 <li>
-<code>libdw</code> or <code>libdwarf</code>. <code>libdw</code> is prefered. They are used to read dwarf debug-line
+<code>libdw</code> or <code>libdwarf</code>. <code>libdw</code> is preferred. They are used to read dwarf debug-line
 information. If you do not have them neither, set <code>--disable-debug_line</code> to
 <code>configure</code> to disable it. As a result you will not see file name and line
 number in backtrace.</li>
@@ -170,7 +174,7 @@ $ sudo make install
 <p>then <code>memleax</code> begins to monitor the target process, and report memory leak in real time.</p>
 
 <p>You should always set expire time by <code>-e</code> options according to your scenarios.
-For example, if you are debugging a HTTP server with keepalive, and there are
+For example, if you are debugging an HTTP server with keepalive, and there are
 connections last for more than 5 minutes, you should set <code>-e 360</code> to cover it.
 If your program is expected to free every memory in 1 second, you should set <code>-e 2</code>
 to get report in time.</p>
@@ -220,7 +224,7 @@ this CallStack will not be showed again:</p>
 <li>too many CallStacks with memory leak (option -c).</li>
 </ul>
 
-<p>After quiting, it also gives statistics for the CallStacks with memory leak:</p>
+<p>After quitting, it also gives statistics for the CallStacks with memory leak:</p>
 
 <pre><code>CallStack[3]: may-leak=20 (2020 bytes)
     expired=20 (2020 bytes), free_expired=0 (0 bytes)
