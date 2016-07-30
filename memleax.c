@@ -61,8 +61,8 @@ int main(int argc, char * const *argv)
 			"      stop monitoring if number of CallStacks with memory\n"
 			"      leak exceeds this. default is 1000.\n"
 			"  -l <backtrace-limit>\n"
-			"      set backtrace deep limit. less backtrace, better\n"
-			"      performace. max is 50, and default is max.\n"
+			"      set backtrace depth limit. less backtrace, better\n"
+			"      performance. max is 50, and default is max.\n"
 			"  -h  print help.\n"
 			"  -v  print version.\n";
 
@@ -134,7 +134,7 @@ int main(int argc, char * const *argv)
 	debug_line_build(g_target_pid);
 
 #ifdef MLX_LINUX
-	/* Linux: attach all other exist threads */
+	/* Linux: attach to all other existing threads */
 	pid_t task_id;
 	while ((task_id = proc_tasks(g_target_pid)) > 0) {
 		if (task_id == g_target_pid) {
@@ -147,7 +147,7 @@ int main(int argc, char * const *argv)
 	}
 #endif
 
-	/* attach target and set breakpoint */
+	/* attach to target and set breakpoint */
 	ptrace_attach(g_target_pid);
 	waitpid(g_target_pid, NULL, 0);
 	ptrace_trace_child(g_target_pid);
@@ -266,7 +266,7 @@ int main(int argc, char * const *argv)
 		if (rip == return_address) {
 			/* -- at function return */
 
-			/* set these for building backstrace far away */
+			/* set these for building backtrace far away */
 			g_current_entry = bp->entry_address;
 			g_current_thread = pid;
 
