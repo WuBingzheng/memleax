@@ -130,6 +130,7 @@ if ! $disable_dwarf; then
 	else
 		echo "Error: libdw or libdwarf is required."
 		echo "Try '--disable-debug_line' to disable it."
+		exit 1
 	fi
 fi
 

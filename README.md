@@ -109,7 +109,7 @@ install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 
 After all required libraries are installed, run
 
-    $ configure
+    $ ./configure
     $ make
     $ sudo make install
 
