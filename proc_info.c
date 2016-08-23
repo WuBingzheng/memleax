@@ -43,11 +43,12 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 	/* walk through */
 	char line[1024];
 	char perms[5];
+	char deleted[100];
 	int ia, ib, ic, id;
 	while (fgets(line, sizeof(line), filp) != NULL) {
-		sscanf(line, "%lx-%lx %s %x %x:%x %d %s",
-				start, end, perms, &ia, &ib, &ic, &id, ret_path);
-		if (perms[2] == 'x' && ret_path[0] == '/') {
+		int ret = sscanf(line, "%lx-%lx %s %x %x:%x %d %s %s",
+				start, end, perms, &ia, &ib, &ic, &id, ret_path, deleted);
+		if (ret == 8 && perms[2] == 'x' && ret_path[0] == '/') {
 			if (exe_self != NULL) {
 				*exe_self = (strcmp(ret_path, exe_name) == 0);
 			}

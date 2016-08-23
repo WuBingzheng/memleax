@@ -33,10 +33,9 @@ struct map_section_s {
 static void ptr_maps_build_file(const char *path, size_t start, size_t end)
 {
 	/* create map-section */
-	struct map_section_s *ms = calloc(1, sizeof(struct map_section_s) + end - start);
+	struct map_section_s *ms = malloc(sizeof(struct map_section_s) + end - start);
 
 	/* read */
-	/* XXX: should parse ELF */
 	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		printf("Warning: error in open map of %s: %s\n", path, strerror(errno));
@@ -47,16 +46,12 @@ static void ptr_maps_build_file(const char *path, size_t start, size_t end)
 		printf("Warning: error in read map of %s: %s\n", path, strerror(errno));
 		return;
 	}
-	if (end - start != rlen) {
-		// printf("Warning: size in read map of %s: %ld %ld\n", path, end - start, rlen);
-		return;
-	}
 
 	/* read OK */
 	close(fd);
 
 	ms->start = start;
-	ms->end = end;
+	ms->end = start + rlen;
 	list_add_tail(&ms->list_node, &g_map_sections);
 }
 
