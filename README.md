@@ -22,7 +22,7 @@ Hope this is useful for others.
 Stable and completed.
 
 `memleax` is a tool with single and clear aim. There is
-no bug to fix and no new feature to add by now.
+no known bug to fix and no new feature to add by now.
 
 However if you get any new feature or bug, please report
 to [GitHub] (https://github.com/WuBingzheng/memleax),
