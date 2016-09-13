@@ -20,15 +20,14 @@ memleax detects memory leak of a running process.
 %setup -q
 
 %build
-./configure --prefix=$RPM_BUILD_ROOT/usr/local/
+./configure --prefix=%{buildroot}/usr/
 make
 
 %install
-rm -rf $RPM_BUILD_ROOT
 make install
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %files
-/usr/local/bin/memleax
+/usr/bin/memleax
