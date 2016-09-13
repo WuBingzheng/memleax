@@ -37,20 +37,6 @@
 <p><code>memleax</code> debugs memory leak of a <em>running</em> process, without recompiling or restarting.</p>
 
 <h2>
-<a id="why-write-this" class="anchor" href="#why-write-this" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>why write this</h2>
-
-<p>Once I met a memory leak problem in production environment.
-The process began leaking memory after long-time running. If using current
-memory debuggers, such as <code>Valgrind</code>, I have to restart the target process
-and wait for several days again. Besides it impacts the target process
-much for several days, which is not good for production.</p>
-
-<p>So I need a tool to debug a running process without restarting it.
-I searched the internet but didn't find one. Then I wrote such a tool myself.</p>
-
-<p>Hope this is useful for others.</p>
-
-<h2>
 <a id="status" class="anchor" href="#status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>status</h2>
 
 <p>Stable and completed.</p>
