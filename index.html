@@ -34,7 +34,8 @@
         <h2>
 <a id="memleax" class="anchor" href="#memleax" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>memleax</h2>
 
-<p><code>memleax</code> debugs memory leak of a <em>running</em> process, without recompiling or restarting.</p>
+<p><code>memleax</code> debugs memory leak of a <em>running</em> process by attaching it,
+without recompiling or restarting.</p>
 
 <h2>
 <a id="status" class="anchor" href="#status" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>status</h2>
@@ -110,16 +111,9 @@ convenient and suitable for production environment.</p>
 </ul>
 
 <h2>
-<a id="download" class="anchor" href="#download" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>download</h2>
+<a id="build-from-source" class="anchor" href="#build-from-source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build from source</h2>
 
-<ul>
-<li><a href="https://github.com/WuBingzheng/memleax/releases">releases</a></li>
-<li><a href="https://github.com/WuBingzheng/memleax/">source code</a>
-</li>
-</ul>
-
-<h2>
-<a id="requirement" class="anchor" href="#requirement" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>requirement</h2>
+<p>The development packages of the following libraries is need:</p>
 
 <ul>
 <li><code>libunwind</code></li>
@@ -136,15 +130,18 @@ However another <code>libelf</code> and <code>libdwarf</code> still can be insta
 <code>memleax</code> works with <code>built-in libelf</code> and <code>pkg libdwarf</code>. So you should
 install <code>libdwarf</code> by <code>pkg</code>, and must not install <code>libelf</code> by <code>pkg</code>.</p>
 
-<h2>
-<a id="build" class="anchor" href="#build" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build</h2>
-
 <p>After all required libraries are installed, run</p>
 
-<pre><code>$ configure
+<pre><code>$ ./configure
 $ make
 $ sudo make install
 </code></pre>
+
+<h2>
+<a id="install-by-package" class="anchor" href="#install-by-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>install by package</h2>
+
+<p>There are also DEB and RPM packages for
+<a href="https://github.com/WuBingzheng/memleax/releases">releases</a>.</p>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h2>
