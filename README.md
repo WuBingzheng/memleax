@@ -77,7 +77,9 @@ GPLv2
 + FreeBSD-amd64, tested on FreeBSD 10.3
 
 
-## requirement
+## build from source
+
+The development packages of the following libraries is need:
 
 + `libunwind`
 + `libelf`
@@ -91,14 +93,17 @@ However another `libelf` and `libdwarf` still can be installed by `pkg`.
 `memleax` works with `built-in libelf` and `pkg libdwarf`. So you should
 install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 
-
-## build
-
 After all required libraries are installed, run
 
     $ ./configure
     $ make
     $ sudo make install
+
+
+## install by package
+
+There are also DEB and RPM packages for
+[releases] (https://github.com/WuBingzheng/memleax/releases).
 
 
 ## usage
