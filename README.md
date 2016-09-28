@@ -79,7 +79,7 @@ GPLv2
 
 ## build from source
 
-The development packages of the following libraries is need:
+The development packages of the following libraries are required:
 
 + `libunwind`
 + `libelf`
@@ -87,6 +87,9 @@ The development packages of the following libraries is need:
 information. If you do not have them neither, set `--disable-debug_line` to
 `configure` to disable it. As a result you will not see file name and line
 number in backtrace.
+
+These packages may have different names in different distributions, such as
+`libelf` may names `libelf`, `elfutils-libelf`, or `libelf1`.
 
 NOTE: On FreeBSD 10.3, there are built-in `libelf` and `libdwarf` already.
 However another `libelf` and `libdwarf` still can be installed by `pkg`.
