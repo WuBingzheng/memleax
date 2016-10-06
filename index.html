@@ -113,7 +113,7 @@ convenient and suitable for production environment.</p>
 <h2>
 <a id="build-from-source" class="anchor" href="#build-from-source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build from source</h2>
 
-<p>The development packages of the following libraries is need:</p>
+<p>The development packages of the following libraries are required:</p>
 
 <ul>
 <li><code>libunwind</code></li>
@@ -124,6 +124,9 @@ information. If you do not have them neither, set <code>--disable-debug_line</co
 <code>configure</code> to disable it. As a result you will not see file name and line
 number in backtrace.</li>
 </ul>
+
+<p>These packages may have different names in different distributions, such as
+<code>libelf</code> may names <code>libelf</code>, <code>elfutils-libelf</code>, or <code>libelf1</code>.</p>
 
 <p>NOTE: On FreeBSD 10.3, there are built-in <code>libelf</code> and <code>libdwarf</code> already.
 However another <code>libelf</code> and <code>libdwarf</code> still can be installed by <code>pkg</code>.
