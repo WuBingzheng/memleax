@@ -47,24 +47,29 @@ int main(int argc, char * const *argv)
 	int memblock_limit = 1000;
 	int callstack_limit = 1000;
 
-	char *help = "Usage: memleax [options] target-pid\n"
-			"Options:\n"
-			"  -e <expire>\n"
-			"      set memory free expire time, default is 10 seconds.\n"
-			"      you should always set this according to your scenarios.\n"
-			"  -d <debug-info-file>\n"
-			"      set debug-info file.\n"
-			"  -m <memory-block-max>\n"
-			"      stop monitoring if number of expired memory block\n"
-			"      at a same CallStack exceeds this. default is 1000.\n"
-			"  -c <call-stack-max>\n"
-			"      stop monitoring if number of CallStacks with memory\n"
-			"      leak exceeds this. default is 1000.\n"
-			"  -l <backtrace-limit>\n"
-			"      set backtrace depth limit. less backtrace, better\n"
-			"      performance. max is 50, and default is max.\n"
-			"  -h  print help.\n"
-			"  -v  print version.\n";
+	const char *help_info = "Usage: memleax [options] target-pid\n"
+		"\n"
+		"You should always set `-e` according to your scenarios.\n"
+		"While other options are good in most instances with default values.\n"
+		"\n"
+		"Options:\n"
+		"  -e <expire>\n"
+		"      Specifies memory free expire threshold in seconds.\n"
+		"      Default is 10. An allocated memory block is reported as\n"
+		"      memory leak if it lives longer than this.\n"
+		"  -d <debug-info-file>\n"
+		"      Specifies separate debug infomation file.\n"
+		"  -l <backtrace-limit>\n"
+		"      Specifies the limit of backtrace levels. Less level,\n"
+		"      better performance. Default is 50, which is also the max.\n"
+		"  -m <memory-block-max>\n"
+		"      Stop monitoring if there are so many expired memory\n"
+		"      block at a same CallStack. Default is 1000.\n"
+		"  -c <call-stack-max>\n"
+		"      Stop monitoring if there are so many CallStack with\n"
+		"      memory leak. Default is 1000.\n"
+		"  -h  Print help and quit.\n"
+		"  -v  Print version and quit.\n";
 
 	/* parse options */
 	int ch;
@@ -106,19 +111,20 @@ int main(int argc, char * const *argv)
 			}
 			break;
 		case 'h':
-			printf("%s", help);
+			printf("%s", help_info);
 			return 0;
 		case 'v':
-			printf("Version: 1.0.1\n");
+			printf("Version: 1.0.2\n");
 			printf("Author: Wu Bingzheng\n");
 			return 0;
 		default:
-			printf("%s", help);
+			printf("Try `-h` for help information.\n");
 			return 1;
 		}
 	}
 	if (optind + 1 != argc) {
-		fprintf(stderr, "invalid argument\n");
+		printf("invalid argument\n");
+		printf("Try `-h` for help information.\n");
 		return 1;
 	}
 	g_target_pid = atoi(argv[optind]);

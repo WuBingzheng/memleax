@@ -18,39 +18,36 @@ or mail to <mailto:wubingzheng@gmail.com>.
 
 ## how it works
 
-`memleax` attaches to a running process, hooks memory allocate/free APIs,
-records all memory blocks, and reports the blocks which live longer
-than 10 seconds (you can change this time by -e option) in real time.
+`memleax` debugs memory leak of a running process by attaching it.
+It hooks the target process's invocation of memory allocation and free,
+and reports the memory blocks which live long enough as memory leak, in real time.
+The default expire threshold is 10 seconds, however you should always
+set it by `-e` option according to your scenarios.
 
 It is very *convenient* to use, and suitable for production environment.
 There is no need to recompile the program or restart the target process.
 You run `memleax` to monitor the target process, wait for the real-time memory
 leak report, and then kill it (e.g. by Ctrl-C) to stop monitoring.
 
-NOTE: Since `memleax` does not run along with the whole life of target
-process, it assumes the long-lived memory blocks are memory leaks.
-
+`memleax` follows new threads, but not forked processes.
+If you want to debug multiple processes, just run multiple `memleax`.
 
 ## performance impact
 
-Because target process's each memory allocation/free API invokes a TRAP, the
-performance impact depends on how often the target program calls memory
-APIs.
-For example, it impacts lightly to nginx with HTTP, while heavily with HTTPS,
-because OpenSSL calls malloc terribly.
+Because target process's each invocation of memory allocation and free makes
+a TRAP, the performance impact depends on the frequency of memory invocation
+in target process.
 
-Although performance impact is worthy of consideration, since `memleax` is
-run to attach to the target process only when you are certain it is in memory leak,
-and stopped after real-time memory leak report, it is not needed to attach to
-the target process for long time.
+For example, it impacts lightly to `nginx` with HTTP, while heavily with HTTPS,
+because `OpenSSL` calls `malloc()` terribly.
 
 
 ## difference from Valgrind
 
 + `Valgrind` starts target process, while `memleax` attaches to a running process;
 
-+ `Valgrind` gives memory leak report on quitting, while `memleax` assumes
-that long-living memory blocks are leaks, so it reports in real time;
++ `Valgrind` gives memory leak report after target process quits, while `memleax`
+reports in real time;
 
 + `Valgrind` reports all unfreed memory include program init, while `memleax`
 reports only after attaching, skipping the init phase;
@@ -77,6 +74,12 @@ GPLv2
 + FreeBSD-amd64, tested on FreeBSD 10.3
 
 
+## install by package
+
+There are DEB and RPM packages for
+[releases] (https://github.com/WuBingzheng/memleax/releases).
+
+
 ## build from source
 
 The development packages of the following libraries are required:
@@ -101,12 +104,6 @@ After all required libraries are installed, run
     $ ./configure
     $ make
     $ sudo make install
-
-
-## install by package
-
-There are also DEB and RPM packages for
-[releases] (https://github.com/WuBingzheng/memleax/releases).
 
 
 ## usage

@@ -15,7 +15,7 @@ for opt in $@; do
 		prefix=$value
 		;;
 	'--version')
-		echo "version: 1.0.1"
+		echo "version: 1.0.2"
 		exit 0
 		;;
 	'--help')
@@ -144,6 +144,7 @@ CFLAGS = $CFLAGS -g -O2 -Wall
 LDLIBS = $LDLIBS
 LDFLAGS = $LDFLAGS
 PREFIX = $prefix
+DESTDIR =
 
 TARGET = memleax
 
@@ -160,10 +161,13 @@ clean :
 	rm -f $(OBJS) $(TARGET)
 
 install :
-	mkdir -p $(PREFIX)/bin/
-	install $(TARGET) $(PREFIX)/bin/
+	mkdir -p $(DESTDIR)$(PREFIX)/bin/
+	install $(TARGET) $(DESTDIR)$(PREFIX)/bin/
+	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1/
+	install -m 644 memleax.1 $(DESTDIR)$(PREFIX)/share/man/man1/
 uninstall :
-	rm -f $(PREFIX)/bin/$(TARGET)
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	rm -f $(DESTDIR)$(PREFIX)/share/man/man1/memleax.1
 
 EOF
 

@@ -1,0 +1,147 @@
+.TH memleax 1 "29 Jan 2017" "version 1.0.2"
+
+
+.SH NAME
+memleax - debugs memory leak of a running process
+
+
+.SH SYNOPSIS
+.B memleax [options]
+.I target-pid
+
+
+.SH DESCRIPTION
+.PP
+.B memleax
+debugs memory leak of a running process by attaching it.
+It hooks the target process's invocation of memory allocation and free,
+and reports the memory blocks which live long enough as memory leak, in real time.
+The default expire threshold is 10 seconds, however you should always
+set it by -e option according to your scenarios.
+
+.PP
+There is no need to recompile the program or restart the target process.
+You run
+.B memleax
+to monitor the target process, wait for the real-time memory
+leak report, and then kill it (e.g. by Ctrl-C) to stop monitoring.
+
+.PP
+.B memleax
+follows new threads, but not forked processes.
+If you want to debug multiple processes, just run multiple memleax.
+
+
+.SH OPTIONS
+.PP
+You should always set
+.B -e
+according to your scenarios.
+While other options are good in most instances with default values.
+
+.TP
+.BI -e " expire"
+Specifies memory free expire threshold in seconds. Default is 10.
+An allocated memory block is reported as memory leak if it lives longer than this.
+You should always set this according to your scenarios.
+For example, if you are debugging an HTTP server with keepalive, and there are
+connections last for more than 5 minutes, you should set `-e 360` to cover it.
+If your program is expected to free every memory in 1 second, you should set `-e 2`
+to get report in time.
+
+.TP
+.BI -d " debug-info-file"
+Specifies separate debug infomation file.
+
+.TP
+.BI -l " backtrace-limit"
+Specifies the limit of backtrace levels. Less level, better performance.
+Default is 50, which is also the max.
+
+.TP
+.BI -m " memory-block-max"
+Stop monitoring if there are so many expired memory block at a same CallStack.
+Default is 1000.
+
+.TP
+.BI -c " call-stack-max"
+Stop monitoring if there are so many CallStack with memory leak.
+Default is 1000.
+
+.TP
+.B -h
+Print help and quit.
+
+.TP
+.B -v
+Print version and quit.
+
+
+
+.SH OUTPUT
+
+The memory blocks live longer than the threshold, are showed as:
+
+.RS
+CallStack[3]: memory expires with 101 bytes, backtrace:
+    0x00007fd322bd8220  libc-2.17.so  malloc()+0
+    0x000000000040084e  test  foo()+14  foo.c:12
+    0x0000000000400875  test  bar()+37  bar.c:20
+    0x0000000000400acb  test  main()+364  test.c:80
+.RE
+
+`CallStack[3]` is the ID of CallStack where memory leak happens.
+
+The backtrace is showed only on the first time, while it only shows the
+ID and counter if expiring again:
+
+.RS
+CallStack[3]: memory expires with 101 bytes, 2 times again
+.RE
+
+If the expired memory block is freed later, it shows:
+
+.RS
+CallStack[6]: expired-memory frees after 10 seconds
+.RE
+
+If there are too many expired-memory-blocks are freed on one CallStack,
+this CallStack will not be showed again:
+
+.RS
+Warning: too many expired-free at CallStack[6]. will not show this CallStack later
+.RE
+
+When you think you have found the answer, stop the debug.
+
+.B memleax
+quits on:
+
+* you stop it, by Ctrl-C or kill,
+
+* the target process quits,
+
+* too many leaks at one CallStack (option -m), or
+
+* too many CallStacks with memory leak (option -c).
+
+After quitting, it also gives statistics for the CallStacks with memory leak:
+
+.RS
+CallStack[3]: may-leak=20 (2020 bytes)
+    expired=20 (2020 bytes), free_expired=0 (0 bytes)
+    alloc=20 (2020 bytes), free=0 (0 bytes)
+    freed memory live time: min=0 max=0 average=0
+    un-freed memory live time: max=20
+    0x00007fd322bd8220  libc-2.17.so  malloc()+0
+    0x000000000040084e  test  foo()+14  foo.c:12
+    0x0000000000400875  test  bar()+37  bar.c:20
+    0x0000000000400acb  test  main()+364  test.c:80
+.RE
+
+
+.SH AUTHOR
+
+Written by Wu Bingzheng.
+
+Project GitHub: https://github.com/WuBingzheng/memleax
