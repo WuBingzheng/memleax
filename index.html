@@ -52,31 +52,29 @@ or mail to <a href="mailto:wubingzheng@gmail.com">wubingzheng@gmail.com</a>.</p>
 <h2>
 <a id="how-it-works" class="anchor" href="#how-it-works" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>how it works</h2>
 
-<p><code>memleax</code> attaches to a running process, hooks memory allocate/free APIs,
-records all memory blocks, and reports the blocks which live longer
-than 10 seconds (you can change this time by -e option) in real time.</p>
+<p><code>memleax</code> debugs memory leak of a running process by attaching it.
+It hooks the target process's invocation of memory allocation and free,
+and reports the memory blocks which live long enough as memory leak, in real time.
+The default expire threshold is 10 seconds, however you should always
+set it by <code>-e</code> option according to your scenarios.</p>
 
 <p>It is very <em>convenient</em> to use, and suitable for production environment.
 There is no need to recompile the program or restart the target process.
 You run <code>memleax</code> to monitor the target process, wait for the real-time memory
 leak report, and then kill it (e.g. by Ctrl-C) to stop monitoring.</p>
 
-<p>NOTE: Since <code>memleax</code> does not run along with the whole life of target
-process, it assumes the long-lived memory blocks are memory leaks.</p>
+<p><code>memleax</code> follows new threads, but not forked processes.
+If you want to debug multiple processes, just run multiple memleax.
 
 <h2>
 <a id="performance-impact" class="anchor" href="#performance-impact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>performance impact</h2>
 
-<p>Because target process's each memory allocation/free API invokes a TRAP, the
-performance impact depends on how often the target program calls memory
-APIs.
-For example, it impacts lightly to nginx with HTTP, while heavily with HTTPS,
-because OpenSSL calls malloc terribly.</p>
+<p>Because target process's each invocation of memory allocation and free makes
+a TRAP, the performance impact depends on the frequency of memory invocation
+in target process.</p>
 
-<p>Although performance impact is worthy of consideration, since <code>memleax</code> is
-run to attach to the target process only when you are certain it is in memory leak,
-and stopped after real-time memory leak report, it is not needed to attach to
-the target process for long time.</p>
+<p>For example, it impacts lightly to <code>nginx</code> with HTTP, while heavily with HTTPS,
+because <code>OpenSSL</code> calls <code>malloc()</code> terribly.</p>
 
 <h2>
 <a id="difference-from-valgrind" class="anchor" href="#difference-from-valgrind" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>difference from Valgrind</h2>
@@ -111,6 +109,12 @@ convenient and suitable for production environment.</p>
 </ul>
 
 <h2>
+<a id="install-by-package" class="anchor" href="#install-by-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>install by package</h2>
+
+<p>There are DEB and RPM packages for
+<a href="https://github.com/WuBingzheng/memleax/releases">releases</a>.</p>
+
+<h2>
 <a id="build-from-source" class="anchor" href="#build-from-source" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>build from source</h2>
 
 <p>The development packages of the following libraries are required:</p>
@@ -139,12 +143,6 @@ install <code>libdwarf</code> by <code>pkg</code>, and must not install <code>li
 $ make
 $ sudo make install
 </code></pre>
-
-<h2>
-<a id="install-by-package" class="anchor" href="#install-by-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>install by package</h2>
-
-<p>There are also DEB and RPM packages for
-<a href="https://github.com/WuBingzheng/memleax/releases">releases</a>.</p>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>usage</h2>
