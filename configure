@@ -59,7 +59,7 @@ case $os_type in
 		exit 2
 	fi
 	CFLAGS="$CFLAGS -DMLX_FREEBSD"
-	LDLIBS="$LDLIBS -lprocstat -lutil"
+	LDLIBS="$LDLIBS -lprocstat -lutil -lz"
 	CFLAGS="$CFLAGS -I/usr/local/include/"
 	LDFLAGS="$LDFLAGS -L/usr/local/lib/"
 	echo "on FreeBSD."
@@ -129,7 +129,8 @@ if ! $disable_dwarf; then
 		LDLIBS="$LDLIBS -ldwarf"
 	else
 		echo "Error: libdw or libdwarf is required."
-		echo "Try '--disable-debug_line' to disable it."
+		echo "You could set '--disable-debug_line' to disable it. As a result,"
+		echo "the file name and line number will not be showed in backtrace."
 		exit 1
 	fi
 fi
