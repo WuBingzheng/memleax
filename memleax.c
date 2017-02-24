@@ -58,7 +58,7 @@ int main(int argc, char * const *argv)
 		"      Default is 10. An allocated memory block is reported as\n"
 		"      memory leak if it lives longer than this.\n"
 		"  -d <debug-info-file>\n"
-		"      Specifies separate debug infomation file.\n"
+		"      Specifies separate debug information file.\n"
 		"  -l <backtrace-limit>\n"
 		"      Specifies the limit of backtrace levels. Less level,\n"
 		"      better performance. Default is 50, which is also the max.\n"
