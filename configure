@@ -15,7 +15,7 @@ for opt in $@; do
 		prefix=$value
 		;;
 	'--version')
-		echo "version: 1.0.2"
+		echo "version: 1.0.3"
 		exit 0
 		;;
 	'--help')

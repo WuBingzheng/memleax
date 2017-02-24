@@ -1,11 +1,11 @@
 Name:           memleax
-Version:        1.0.2
+Version:        1.0.3
 Release:        1%{?dist}
 Summary:        Debugs memory leak of a running process
 
 License:        GPLv2
 URL:            http://wubingzheng.github.io/memleax/
-Source0:        https://github.com/WuBingzheng/memleax/archive/v1.0.2.tar.gz
+Source0:        https://github.com/WuBingzheng/memleax/archive/v1.0.3.tar.gz
 
 BuildRequires:  libdwarf-devel, elfutils-libelf-devel, libunwind-devel
 
@@ -36,5 +36,7 @@ make install DESTDIR=%{buildroot}
 
 
 %changelog
+* Sat Feb 28 2017 Wu Bingzheng <wubingzheng@gmail.com> - 1.0.3-1.el7.centos
+- add '-lz' in configure for FreeBSD
 * Sat Jan 28 2017 Wu Bingzheng <wubingzheng@gmail.com> - 1.0.2-1.el7.centos
 - update README.md, and add man page

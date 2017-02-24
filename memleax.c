@@ -114,7 +114,7 @@ int main(int argc, char * const *argv)
 			printf("%s", help_info);
 			return 0;
 		case 'v':
-			printf("Version: 1.0.2\n");
+			printf("Version: 1.0.3\n");
 			printf("Author: Wu Bingzheng\n");
 			return 0;
 		default:
