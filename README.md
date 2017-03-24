@@ -81,8 +81,11 @@ There are DEB and RPM packages for
 
 For Arch Linux users, `memleax` is available in AUR. Thanks to jelly.
 
-For FreeBSD users, `memleax` is available in FreeBSD Ports collection.
+For FreeBSD users, `memleax` is available in FreeBSD Ports Collection.
 Thanks to tabrarg.
+
+I tried to submit `memleax` to Fedora [EPEL] (https://bugzilla.redhat.com/show_bug.cgi?id=1417531),
+but failed. Any help is welcomed.
 
 ## build from source
 
