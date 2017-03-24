@@ -79,6 +79,10 @@ GPLv2
 There are DEB and RPM packages for
 [releases] (https://github.com/WuBingzheng/memleax/releases).
 
+For Arch Linux users, `memleax` is available in AUR. Thanks to jelly.
+
+For FreeBSD users, `memleax` is available in FreeBSD Ports collection.
+Thanks to tabrarg.
 
 ## build from source
 
