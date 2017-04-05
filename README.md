@@ -113,6 +113,15 @@ After all required libraries are installed, run
     $ sudo make install
 
 
+## install
+
+### debian
+
+	sudo apt-get install libunwind-dev libelf-dev libdwarf-dev
+	./configure
+	make && sudo make install
+
+
 ## usage
 
 ### start
