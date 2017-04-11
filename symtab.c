@@ -30,7 +30,8 @@ struct symbol_s {
 
 static ARRAY(g_symbol_table, struct symbol_s, 1000);
 
-static int symtab_build_section(Elf *elf, Elf_Scn *section, uintptr_t offset)
+static int symtab_build_section(Elf *elf, Elf_Scn *section,
+		uintptr_t offset, uintptr_t base_addr)
 {
 	Elf64_Shdr *shdr = elf64_getshdr(section);
 	if (shdr == NULL) {
@@ -65,13 +66,31 @@ static int symtab_build_section(Elf *elf, Elf_Scn *section, uintptr_t offset)
 		strncpy(sym->name, name, sizeof(sym->name));
 		sym->name[sizeof(sym->name) - 1] = '\0';
 
-		sym->address = esym->st_value + offset;
+		sym->address = esym->st_value - base_addr + offset;
 		sym->size = esym->st_size;
 		sym->weak = (ELF64_ST_BIND(esym->st_info) == STB_WEAK);
 
 		count++;
 	}
 	return count;
+}
+
+static uintptr_t symtab_elf_base(Elf *elf)
+{
+	size_t i, n;
+
+	elf_getphdrnum(elf, &n);
+	Elf64_Phdr *headers = elf64_getphdr(elf);
+	if (n == 0 || headers == NULL) {
+		return 0;
+	}
+
+	for (i = 0; i < n; i ++) {
+		if (headers[i].p_type == PT_LOAD) {
+			return headers[i].p_vaddr;
+		}
+	}
+	return 0;
 }
 
 static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
@@ -89,15 +108,18 @@ static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
 		return -1;
 	}
 
-	/* get offset */
+	uintptr_t offset = 0, base_addr = 0;
 	Elf64_Ehdr *hdr = elf64_getehdr(elf);
-	uintptr_t offset = hdr->e_type == ET_EXEC ? 0 : start;
+	if (hdr->e_type == ET_DYN) { /* only for dynamic library, but not executable */
+		offset = start; /* offset in process */
+		base_addr = symtab_elf_base(elf); /* base address of library */
+	}
 
 	/* find symbol section */
 	Elf_Scn* section = NULL;
 	int count = 0;
 	while ((section = elf_nextscn(elf, section)) != NULL) {
-		count += symtab_build_section(elf, section, offset);
+		count += symtab_build_section(elf, section, offset, base_addr);
 	}
 
 	/* clean up */
