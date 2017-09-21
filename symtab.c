@@ -166,7 +166,7 @@ const char *symtab_by_address(uintptr_t address, int *offset)
 		struct symbol_s *sym = &table[mid];
 		if (address < sym->address) {
 			max = mid - 1;
-		} else if (address > sym->address + sym->size) {
+		} else if (address >= sym->address + sym->size) {
 			min = mid + 1;
 		} else {
 			*offset = address - sym->address;
