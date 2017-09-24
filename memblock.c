@@ -72,7 +72,7 @@ void memblock_delete(struct memblock_s *mb)
 		cs->free_expired_size += mb->size;
 
 		if (cs->free_expired_count <= DONOT_SHOW_AFTER_FREE_EXPIRES) {
-			printf("CallStack[%d]: expired-memory frees after %ld seconds\n",
+			printf("CallStack[%d]: expired-memory frees after %zd seconds\n",
 					cs->id, free_time);
 		}
 		if (cs->free_expired_count == DONOT_SHOW_AFTER_FREE_EXPIRES) {
@@ -126,11 +126,11 @@ static void memblock_expire_one(struct memblock_s *mb)
 	static int callstack_id = 1;
 	if (cs->id == 0) { /* first time */
 		cs->id = callstack_id++;
-		printf("CallStack[%d]: memory expires with %ld bytes, backtrace:\n",
+		printf("CallStack[%d]: memory expires with %zd bytes, backtrace:\n",
 				cs->id, mb->size);
 		callstack_print(cs);
 	} else if (cs->free_expired_count < DONOT_SHOW_AFTER_FREE_EXPIRES) {
-		printf("CallStack[%d]: memory expires with %ld bytes, %d times again\n",
+		printf("CallStack[%d]: memory expires with %zd bytes, %d times again\n",
 				cs->id, mb->size, cs->expired_count);
 	}
 }

@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <libelf.h>
+#include <gelf.h>
 #include <libunwind-ptrace.h>
 #include <string.h>
 
@@ -33,12 +33,12 @@ static ARRAY(g_symbol_table, struct symbol_s, 1000);
 static int symtab_build_section(Elf *elf, Elf_Scn *section,
 		uintptr_t offset, uintptr_t base_addr)
 {
-	Elf64_Shdr *shdr = elf64_getshdr(section);
-	if (shdr == NULL) {
+	GElf_Shdr shdr;
+	if (gelf_getshdr(section, &shdr) == NULL) {
 		return 0;
 	}
 
-	if (shdr->sh_type != SHT_SYMTAB && shdr->sh_type != SHT_DYNSYM) {
+	if (shdr.sh_type != SHT_SYMTAB && shdr.sh_type != SHT_DYNSYM) {
 		return 0;
 	}
 
@@ -47,28 +47,27 @@ static int symtab_build_section(Elf *elf, Elf_Scn *section,
 		return 0;
 	}
 
-	int count = 0;
-	Elf64_Sym *esym = (Elf64_Sym *)data->d_buf;
-	Elf64_Sym *lastsym = (Elf64_Sym *)((char*) data->d_buf + data->d_size);
-	for (; esym < lastsym; esym++) {
-		if ((esym->st_value == 0) || (esym->st_size == 0) ||
-				(esym->st_shndx == SHN_UNDEF) ||
+	int i, count = 0;
+	GElf_Sym esym;
+	for (i = 0; gelf_getsym(data, i, &esym) != NULL; i ++) {
+		if ((esym.st_value == 0) || (esym.st_size == 0) ||
+				(esym.st_shndx == SHN_UNDEF) ||
 #ifdef STB_NUM
-				(ELF64_ST_BIND(esym->st_info) == STB_NUM) ||
+				(GELF_ST_BIND(esym.st_info) == STB_NUM) ||
 #endif
-				(ELF64_ST_TYPE(esym->st_info) != STT_FUNC)) {
+				(GELF_ST_TYPE(esym.st_info) != STT_FUNC)) {
 			continue;
 		}
 
 		struct symbol_s *sym = array_push(&g_symbol_table);
 
-		char *name = elf_strptr(elf, shdr->sh_link, (size_t)esym->st_name);
+		char *name = elf_strptr(elf, shdr.sh_link, (size_t)esym.st_name);
 		strncpy(sym->name, name, sizeof(sym->name));
 		sym->name[sizeof(sym->name) - 1] = '\0';
 
-		sym->address = esym->st_value - base_addr + offset;
-		sym->size = esym->st_size;
-		sym->weak = (ELF64_ST_BIND(esym->st_info) == STB_WEAK);
+		sym->address = esym.st_value - base_addr + offset;
+		sym->size = esym.st_size;
+		sym->weak = (GELF_ST_BIND(esym.st_info) == STB_WEAK);
 
 		count++;
 	}
@@ -80,14 +79,15 @@ static uintptr_t symtab_elf_base(Elf *elf)
 	size_t i, n;
 
 	elf_getphdrnum(elf, &n);
-	Elf64_Phdr *headers = elf64_getphdr(elf);
-	if (n == 0 || headers == NULL) {
+	if (n == 0) {
 		return 0;
 	}
 
 	for (i = 0; i < n; i ++) {
-		if (headers[i].p_type == PT_LOAD) {
-			return headers[i].p_vaddr;
+		GElf_Phdr header;
+		gelf_getphdr(elf, i, &header);
+		if (header.p_type == PT_LOAD) {
+			return header.p_vaddr;
 		}
 	}
 	return 0;
@@ -109,8 +109,9 @@ static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
 	}
 
 	uintptr_t offset = 0, base_addr = 0;
-	Elf64_Ehdr *hdr = elf64_getehdr(elf);
-	if (hdr->e_type == ET_DYN) { /* only for dynamic library, but not executable */
+	GElf_Ehdr hdr;
+	gelf_getehdr(elf, &hdr);
+	if (hdr.e_type == ET_DYN) { /* only for dynamic library, but not executable */
 		offset = start; /* offset in process */
 		base_addr = symtab_elf_base(elf); /* base address of library */
 	}

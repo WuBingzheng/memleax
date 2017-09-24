@@ -10,7 +10,7 @@
 
 #if defined(MLX_WITH_LIBDWARF) || defined(MLX_WITH_LIBDW)
 
-#include <libelf.h>
+#include <gelf.h>
 #include <dwarf.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -235,8 +235,9 @@ static int debug_line_build_file(const char *path, size_t start, size_t end)
 		close(fd);
 		return -1;
 	}
-	Elf64_Ehdr *hdr = elf64_getehdr(elf);
-	uintptr_t offset = hdr->e_type == ET_EXEC ? 0 : start;
+	GElf_Ehdr hdr;
+	gelf_getehdr(elf, &hdr);
+	uintptr_t offset = hdr.e_type == ET_EXEC ? 0 : start;
 	elf_end(elf);
 
 	int count = debug_line_build_dwarf(fd, offset);

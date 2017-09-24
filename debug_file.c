@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <libelf.h>
+#include <gelf.h>
 #include <string.h>
 
 #include "debug_file.h"
@@ -102,20 +102,23 @@ static int elf_section_data(int fd, const char *name, uint8_t *out_buf, int out_
 		return -1;
 	}
 
-	Elf64_Ehdr *elfhdr = elf64_getehdr(elf);
-	Elf_Scn *strtab_sec = elf_getscn(elf, elfhdr->e_shstrndx);
+	GElf_Ehdr elfhdr;
+	if (gelf_getehdr(elf, &elfhdr) == NULL) {
+		return -1;
+	}
+	Elf_Scn *strtab_sec = elf_getscn(elf, elfhdr.e_shstrndx);
 	Elf_Data *strtab_data = elf_getdata(strtab_sec, NULL);
 	const char *strings = strtab_data->d_buf;
 
 	Elf_Scn* section = NULL;
 	int ret = -1;
 	while ((section = elf_nextscn(elf, section)) != NULL) {
-		Elf64_Shdr *shdr = elf64_getshdr(section);
-		if (shdr == NULL) {
+		GElf_Shdr shdr;
+		if (gelf_getshdr(section, &shdr) == NULL) {
 			break;
 		}
 
-		if (strcmp(strings + shdr->sh_name, name) == 0) {
+		if (strcmp(strings + shdr.sh_name, name) == 0) {
 			Elf_Data *sdata = elf_getdata(section, NULL);
 			if (sdata->d_size > out_size) {
 				break;

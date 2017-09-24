@@ -310,7 +310,7 @@ int main(int argc, char * const *argv)
 			 * is recoverd already */
 			uintptr_t code = ptrace_get_data(pid, rip);
 			if ((code & 0xFF) == 0xCC) {
-				printf("unknown breakpoint %lx\n", rip);
+				printf("unknown breakpoint %zx\n", rip);
 				break;
 			}
 		}

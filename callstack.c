@@ -57,7 +57,7 @@ void callstack_print(struct callstack_s *cs)
 			break;
 		}
 
-		printf("    0x%016lx", address);
+		printf("    0x%016zx", address);
 
 		printf("  %s", addr_maps_search(address));
 
