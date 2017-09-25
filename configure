@@ -40,32 +40,37 @@ for opt in $@; do
 done
 
 
-# check OS and machine type, GNU/Linux-x86_64 or FreeBSD-amd64
-echo 'checking OS and machine type...'
-machine_type=`uname -m`
-os_type=`uname`
-case $os_type in
+# check OS and machine type
+echo 'checking machine type...'
+case `uname -m` in
+'x86'|'i386'|'i686')
+	machine="x86"
+	CFLAGS="$CFLAGS -DMLX_X86"
+	;;
+'x86_64'|'amd64')
+	machine="x86_64"
+	CFLAGS="$CFLAGS -DMLX_X86_64"
+	;;
+*)
+	echo "Error: unsupported machine: `uname -m`."
+	echo "Only x86, x86_64, arm, and aarch64 are supported."
+	exit 2
+	;;
+esac
+
+echo 'checking OS type...'
+case `uname` in
 'Linux')
-	if [ $machine_type != x86_64 ] ; then
-		echo "Error: unsupported machine type: $machine_type. Only x86_64 is supported."
-		exit 2
-	fi
 	CFLAGS="$CFLAGS -DMLX_LINUX"
-	echo "on GNU/Linux."
 	;;
 'FreeBSD')
-	if [ $machine_type != amd64 ] ; then
-		echo "Error: unsupported machine type: $machine_type. Only amd64 is supported."
-		exit 2
-	fi
 	CFLAGS="$CFLAGS -DMLX_FREEBSD"
 	LDLIBS="$LDLIBS -lprocstat -lutil -lz"
 	CFLAGS="$CFLAGS -I/usr/local/include/"
 	LDFLAGS="$LDFLAGS -L/usr/local/lib/"
-	echo "on FreeBSD."
 	;;
 *)
-	echo "Error: unsupported OS type: $os_type."
+	echo "Error: unsupported OS: `uname`."
 	echo "Only GNU/Linux and FreeBSD are supported."
 	exit 2
 	;;
@@ -106,7 +111,7 @@ EOF
 }
 
 # - check libunwind
-LDLIBS="$LDLIBS -lunwind-ptrace -lunwind -lunwind-x86_64"
+LDLIBS="$LDLIBS -lunwind-ptrace -lunwind -lunwind-$machine"
 if ! check_lib libunwind libunwind.h "unw_create_addr_space(NULL,0)" ; then
 	echo "Error: libunwind-devel is required."
 	exit 1

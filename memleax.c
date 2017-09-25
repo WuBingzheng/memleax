@@ -18,6 +18,7 @@
 #include <errno.h>
 
 #include "breakpoint.h"
+#include "machines.h"
 #include "ptrace_utils.h"
 #include "memblock.h"
 #include "symtab.h"
@@ -243,12 +244,9 @@ int main(int argc, char * const *argv)
 		registers_info_t regs;
 		ptrace_get_regs(pid, &regs);
 
-		/* unwind the RIP back by 1 to let the CPU execute the
+		/* unwind the RIP back to let the CPU execute the
 		 * original instruction that was there. */
-		REG_RIP(regs) -= 1;
-		ptrace_set_regs(pid, &regs);
-
-		uintptr_t rip = REG_RIP(regs);
+		uintptr_t rip = pc_unwind(pid, &regs);
 		log_debug("\nbreak at: %lx\n", rip);
 
 		/* another thread is in a function, so hold this one */
@@ -277,7 +275,7 @@ int main(int argc, char * const *argv)
 			g_current_thread = pid;
 
 			return_address = 0;
-			if (bp->handler(REG_RAX(regs), arg1, arg2) != 0) {
+			if (bp->handler(call_return_value(&regs), arg1, arg2) != 0) {
 				printf("\n== Not enough memory.\n");
 				break;
 			}
@@ -295,13 +293,13 @@ int main(int argc, char * const *argv)
 			ptrace_set_data(pid, bp->entry_address, bp->entry_code);
 
 			/* set breakpoint at return address */
-			return_address = ptrace_get_data(pid, REG_RSP(regs));
+			return_address = call_return_address(pid, &regs);
 			return_code = ptrace_get_data(pid, return_address);
 			ptrace_set_int3(pid, return_address, return_code);
 
 			/* save arguments */
-			arg1 = REG_RDI(regs);
-			arg2 = REG_RSI(regs);
+			arg1 = call_arg1(pid, &regs);
+			arg2 = call_arg2(pid, &regs);
 
 			last_thread = pid;
 

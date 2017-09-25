@@ -46,7 +46,7 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 	char deleted[100];
 	int ia, ib, ic, id;
 	while (fgets(line, sizeof(line), filp) != NULL) {
-		int ret = sscanf(line, "%lx-%lx %s %x %x:%x %d %s %s",
+		int ret = sscanf(line, "%zx-%zx %s %x %x:%x %d %s %s",
 				start, end, perms, &ia, &ib, &ic, &id, ret_path, deleted);
 		if (ret == 8 && perms[2] == 'x' && ret_path[0] == '/') {
 			if (exe_self != NULL) {

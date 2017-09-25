@@ -15,11 +15,6 @@
 #include <sys/user.h>
 
 typedef struct user_regs_struct registers_info_t;
-#define REG_RAX(ri) (ri).rax
-#define REG_RIP(ri) (ri).rip
-#define REG_RSI(ri) (ri).rsi
-#define REG_RDI(ri) (ri).rdi
-#define REG_RSP(ri) (ri).rsp
 
 static inline void ptrace_get_regs(pid_t pid, struct user_regs_struct *regs)
 {
@@ -82,11 +77,6 @@ static inline void ptrace_detach(pid_t pid, int signum)
 #include <machine/reg.h>
 
 typedef struct reg registers_info_t;
-#define REG_RAX(ri) (ri).r_rax
-#define REG_RIP(ri) (ri).r_rip
-#define REG_RSI(ri) (ri).r_rsi
-#define REG_RDI(ri) (ri).r_rdi
-#define REG_RSP(ri) (ri).r_rsp
 
 static inline void ptrace_get_regs(pid_t pid, struct reg *regs)
 {

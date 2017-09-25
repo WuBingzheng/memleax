@@ -72,7 +72,7 @@ void memblock_delete(struct memblock_s *mb)
 		cs->free_expired_size += mb->size;
 
 		if (cs->free_expired_count <= DONOT_SHOW_AFTER_FREE_EXPIRES) {
-			printf("CallStack[%d]: expired-memory frees after %zd seconds\n",
+			printf("CallStack[%d]: expired-memory frees after %ld seconds\n",
 					cs->id, free_time);
 		}
 		if (cs->free_expired_count == DONOT_SHOW_AFTER_FREE_EXPIRES) {
