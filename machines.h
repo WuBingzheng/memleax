@@ -3,6 +3,22 @@
 
 #include "ptrace_utils.h"
 
+/* We use the names in Linux, and define the aliases for FreeBSD. */
+#ifdef MLX_FREEBSD
+#define esp r_esp
+#define eax r_eax
+#define esi r_esi
+#define edi r_edi
+#define eip r_eip
+
+#define rsp r_rsp
+#define rax r_rax
+#define rsi r_rsi
+#define rdi r_rdi
+#define rip r_rip
+#endif
+
+
 #if defined(MLX_X86)
 static inline uintptr_t call_return_address(pid_t pid, registers_info_t *regs)
 {
