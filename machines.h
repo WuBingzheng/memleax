@@ -26,6 +26,15 @@ static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
 	ptrace_set_regs(pid, regs);
 	return regs->eip;
 }
+static inline void set_breakpoint(pid_t pid, uintptr_t address, uintptr_t code)
+{
+	ptrace_set_data(pid, address, (code & 0xFFFFFF00U) | 0xCC);
+}
+static inline int is_breakpoint(pid_t pid, uintptr_t address)
+{
+	return (ptrace_get_data(pid, address) & 0xFF) == 0xCC;
+}
+
 #elif defined(MLX_X86_64)
 static inline uintptr_t call_return_address(pid_t pid, registers_info_t *regs)
 {
@@ -49,9 +58,70 @@ static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
 	ptrace_set_regs(pid, regs);
 	return regs->rip;
 }
-#elif defined(MLX_ARM)
+static inline void set_breakpoint(pid_t pid, uintptr_t address, uintptr_t code)
+{
+  #ifdef MLX_LINUX
+	ptrace_set_data(pid, address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
+  #else // MLX_FREEBSD
+	ptrace_set_data(pid, address, (code & 0xFFFFFF00U) | 0xCC);
+  #endif
+}
+static inline int is_breakpoint(pid_t pid, uintptr_t address)
+{
+	return (ptrace_get_data(pid, address) & 0xFF) == 0xCC;
+}
 
-#elif defined(MLX_ARM64)
+#elif defined(MLX_ARMv7)
+static inline uintptr_t call_return_address(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[14];
+}
+static inline uintptr_t call_return_value(registers_info_t *regs)
+{
+	return regs->uregs[0];
+}
+static inline uintptr_t call_arg1(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[0];
+}
+static inline uintptr_t call_arg2(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[1];
+}
+static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[15];
+}
+static inline void set_breakpoint(pid_t pid, uintptr_t address, uintptr_t code)
+{
+	ptrace_set_data(pid, address, 0xE7F001F0);
+}
+static inline int is_breakpoint(pid_t pid, uintptr_t address)
+{
+	return ptrace_get_data(pid, address) == 0xE7F001F0;
+}
+
+#elif defined(MLX_ARMv8)
+static inline uintptr_t call_return_address(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[30];
+}
+static inline uintptr_t call_return_value(registers_info_t *regs)
+{
+	return regs->uregs[0];
+}
+static inline uintptr_t call_arg1(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[0];
+}
+static inline uintptr_t call_arg2(pid_t pid, registers_info_t *regs)
+{
+	return regs->uregs[1];
+}
+static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
+{
+	return 0; // XXX
+}
 #endif
 
 #endif

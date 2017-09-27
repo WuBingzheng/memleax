@@ -12,6 +12,7 @@
 
 #include "callstack.h"
 #include "memblock.h"
+#include "machines.h"
 #include "breakpoint.h"
 #include "ptr_backtrace.h"
 #include "ptrace_utils.h"
@@ -71,7 +72,7 @@ static void do_breakpoint_init(pid_t pid, struct breakpoint_s *bp,
 	bp->entry_code = ptrace_get_data(pid, bp->entry_address);
 
 	/* write the trap instruction 'int 3' into the address */
-	ptrace_set_int3(pid, bp->entry_address, bp->entry_code);
+	set_breakpoint(pid, bp->entry_address, bp->entry_code);
 }
 
 void breakpoint_init(pid_t pid)

@@ -14,13 +14,17 @@
 #ifdef MLX_LINUX
 #include <sys/user.h>
 
+  #if defined(MLX_X86) || defined(MLX_X86_64)
 typedef struct user_regs_struct registers_info_t;
+  #else // MLX_ARMv7 || MLX_ARMv8
+typedef struct user_regs registers_info_t;
+  #endif
 
-static inline void ptrace_get_regs(pid_t pid, struct user_regs_struct *regs)
+static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 {
 	ptrace(PTRACE_GETREGS, pid, 0, regs);
 }
-static inline void ptrace_set_regs(pid_t pid, struct user_regs_struct *regs)
+static inline void ptrace_set_regs(pid_t pid, registers_info_t *regs)
 {
 	ptrace(PTRACE_SETREGS, pid, 0, regs);
 }
@@ -32,10 +36,6 @@ static inline uintptr_t ptrace_get_data(pid_t pid, uintptr_t address)
 static inline void ptrace_set_data(pid_t pid, uintptr_t address, uintptr_t data)
 {
 	ptrace(PTRACE_POKETEXT, pid, address, data);
-}
-static inline void ptrace_set_int3(pid_t pid, uintptr_t address, uintptr_t code)
-{
-	ptrace_set_data(pid, address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
 }
 
 static inline uintptr_t ptrace_get_child(pid_t pid)
@@ -78,11 +78,11 @@ static inline void ptrace_detach(pid_t pid, int signum)
 
 typedef struct reg registers_info_t;
 
-static inline void ptrace_get_regs(pid_t pid, struct reg *regs)
+static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 {
 	ptrace(PT_GETREGS, pid, (caddr_t)regs, 0);
 }
-static inline void ptrace_set_regs(pid_t pid, struct reg *regs)
+static inline void ptrace_set_regs(pid_t pid, registers_info_t *regs)
 {
 	ptrace(PT_SETREGS, pid, (caddr_t)regs, 0);
 }
@@ -94,10 +94,6 @@ static inline int ptrace_get_data(pid_t pid, uintptr_t address)
 static inline void ptrace_set_data(pid_t pid, uintptr_t address, int data)
 {
 	ptrace(PT_WRITE_I, pid, (caddr_t)address, data);
-}
-static inline void ptrace_set_int3(pid_t pid, uintptr_t address, int code)
-{
-	ptrace_set_data(pid, address, (code & 0xFFFFFF00U) | 0xCC);
 }
 static inline void ptrace_continue(pid_t pid, int signum)
 {

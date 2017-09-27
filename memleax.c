@@ -264,7 +264,7 @@ int main(int argc, char * const *argv)
 			/* recover return code */
 			ptrace_set_data(pid, return_address, return_code);
 			/* re-set breakpoint at entry address */
-			ptrace_set_int3(pid, bp->entry_address, bp->entry_code);
+			set_breakpoint(pid, bp->entry_address, bp->entry_code);
 		}
 
 		if (rip == return_address) {
@@ -295,7 +295,7 @@ int main(int argc, char * const *argv)
 			/* set breakpoint at return address */
 			return_address = call_return_address(pid, &regs);
 			return_code = ptrace_get_data(pid, return_address);
-			ptrace_set_int3(pid, return_address, return_code);
+			set_breakpoint(pid, return_address, return_code);
 
 			/* save arguments */
 			arg1 = call_arg1(pid, &regs);
@@ -306,8 +306,7 @@ int main(int argc, char * const *argv)
 		} else {
 			/* maybe other thread met a return-breakpoint which
 			 * is recoverd already */
-			uintptr_t code = ptrace_get_data(pid, rip);
-			if ((code & 0xFF) == 0xCC) {
+			if (is_breakpoint(pid, rip)) {
 				printf("unknown breakpoint %zx\n", rip);
 				break;
 			}

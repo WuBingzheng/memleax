@@ -51,6 +51,10 @@ case `uname -m` in
 	machine="x86_64"
 	CFLAGS="$CFLAGS -DMLX_X86_64"
 	;;
+'armv7'*)
+	machine="arm"
+	CFLAGS="$CFLAGS -DMLX_ARMv7"
+	;;
 *)
 	echo "Error: unsupported machine: `uname -m`."
 	echo "Only x86, x86_64, arm, and aarch64 are supported."

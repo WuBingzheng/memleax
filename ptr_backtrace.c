@@ -83,6 +83,14 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 #endif
 	return 0;
 }
+static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s)
+{
+	*d = *s;
+#if defined(MLX_X86) || defined(MLX_X86_64)
+	d->unwind_info = malloc(s->unwind_info_size);
+	memcpy(d->unwind_info, s->unwind_info, s->unwind_info_size);
+#endif
+}
 static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_info_t *pi,
 		int need_unwind_info, void *arg)
 {
@@ -100,9 +108,7 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 		struct ip_info_s *ii = list_entry(p, struct ip_info_s, hash_node);
 		if (ii->ret < 0) return ii->ret;
 
-		*pi = ii->pi;
-		pi->unwind_info = malloc(pi->unwind_info_size);
-		memcpy(pi->unwind_info, ii->pi.unwind_info, pi->unwind_info_size);
+		_ptr_unw_proc_info_copy(pi, &ii->pi);
 		return ii->ret;
 	}
 
@@ -112,9 +118,7 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 	/* cache miss, query it */
 	ii->ret = _UPT_find_proc_info(as, ip, pi, need_unwind_info, arg);
 	if (ii->ret >= 0) { /* add to cache if success */
-		ii->pi = *pi;
-		ii->pi.unwind_info = malloc(pi->unwind_info_size);
-		memcpy(ii->pi.unwind_info, pi->unwind_info, pi->unwind_info_size);
+		_ptr_unw_proc_info_copy(&ii->pi, pi);
 	}
 	hash_add(ip_info_hash, &ii->hash_node, sizeof(ip));
 	return ii->ret;
