@@ -25,7 +25,7 @@ struct symbol_s {
 	uintptr_t	address;
 	size_t		size;
 	int8_t		weak;
-	char		name[47];
+	char		*name;
 };
 
 static ARRAY(g_symbol_table, struct symbol_s, 1000);
@@ -61,9 +61,7 @@ static int symtab_build_section(Elf *elf, Elf_Scn *section,
 
 		struct symbol_s *sym = array_push(&g_symbol_table);
 
-		char *name = elf_strptr(elf, shdr.sh_link, (size_t)esym.st_name);
-		strncpy(sym->name, name, sizeof(sym->name));
-		sym->name[sizeof(sym->name) - 1] = '\0';
+		sym->name = strdup(elf_strptr(elf, shdr.sh_link, (size_t)esym.st_name));
 
 		sym->address = esym.st_value - base_addr + offset;
 		sym->size = esym.st_size;
@@ -166,7 +164,7 @@ const char *symtab_by_address(uintptr_t address, int *offset)
 		struct symbol_s *sym = &table[mid];
 		if (address < sym->address) {
 			max = mid - 1;
-		} else if (address > sym->address + sym->size) {
+		} else if (address >= sym->address + sym->size) {
 			min = mid + 1;
 		} else {
 			*offset = address - sym->address;
