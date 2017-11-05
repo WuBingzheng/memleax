@@ -12,8 +12,8 @@ Stable and completed.
 no known bug to fix and no new feature to add by now.
 
 However if you get any new feature or bug, please report
-to [GitHub] (https://github.com/WuBingzheng/memleax),
-or mail to <mailto:wubingzheng@gmail.com>.
+to [GitHub](https://github.com/WuBingzheng/memleax),
+or [mail to me](mailto:wubingzheng@gmail.com).
 
 
 ## how it works
@@ -70,21 +70,25 @@ GPLv2
 
 ## OS-machine
 
-+ GNU/Linux-x86_64, tested on CentOS 7.2 and Ubuntu 16.04
-+ FreeBSD-amd64, tested on FreeBSD 10.3
++ `GNU/Linux` at `x86` and `x86_64`, tested on CentOS 7.2 and Ubuntu 16.04
++ `GNU/Linux` at `armv7` and `aarch64`, tested on Raspbian and [pi64](https://github.com/bamarni/pi64).
++ `FreeBSD` at `i386` and `amd64`, tested on FreeBSD 10.3
+
+NOTE: If `memleax` can not show function backtrace on `GNU/Linux` at `aarch64`,
+you could try to compile the target program with `-funwind-tables` flag of GCC.
 
 
 ## install by package
 
 There are DEB and RPM packages for
-[releases] (https://github.com/WuBingzheng/memleax/releases).
+[releases](https://github.com/WuBingzheng/memleax/releases).
 
 For Arch Linux users, `memleax` is available in AUR. Thanks to jelly.
 
 For FreeBSD users, `memleax` is available in FreeBSD Ports Collection.
 Thanks to tabrarg.
 
-I tried to submit `memleax` to Fedora [EPEL] (https://bugzilla.redhat.com/show_bug.cgi?id=1417531),
+I tried to submit `memleax` to Fedora [EPEL](https://bugzilla.redhat.com/show_bug.cgi?id=1417531),
 but failed. Any help is welcomed.
 
 ## build from source
