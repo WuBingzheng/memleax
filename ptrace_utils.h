@@ -14,19 +14,38 @@
 #ifdef MLX_LINUX
 #include <sys/user.h>
 
-  #if defined(MLX_X86) || defined(MLX_X86_64)
-typedef struct user_regs_struct registers_info_t;
-  #else // MLX_ARMv7 || MLX_ARMv8
+#include <elf.h>
+#include <sys/uio.h>
+
+  #ifdef MLX_ARMv7
 typedef struct user_regs registers_info_t;
+  #else
+typedef struct user_regs_struct registers_info_t;
   #endif
 
 static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 {
+#ifdef PTRACE_GETREGS
 	ptrace(PTRACE_GETREGS, pid, 0, regs);
+#else
+	long regset = NT_PRSTATUS;
+	struct iovec ioVec;
+	ioVec.iov_base = regs;
+	ioVec.iov_len = sizeof(*regs);
+	ptrace(PTRACE_GETREGSET, pid, (void *)regset, &ioVec);
+#endif
 }
 static inline void ptrace_set_regs(pid_t pid, registers_info_t *regs)
 {
+#ifdef PTRACE_GETREGS
 	ptrace(PTRACE_SETREGS, pid, 0, regs);
+#else
+	long regset = NT_PRSTATUS;
+	struct iovec ioVec;
+	ioVec.iov_base = regs;
+	ioVec.iov_len = sizeof(*regs);
+	ptrace(PTRACE_SETREGSET, pid, (void *)regset, &ioVec);
+#endif
 }
 
 static inline uintptr_t ptrace_get_data(pid_t pid, uintptr_t address)

@@ -64,6 +64,28 @@ void ptr_maps_build(pid_t pid)
 	}
 }
 
+#ifdef MLX_AARCH64
+/* There maybe a bug in libunwind-1.12.1 which dose not accesss aarch64
+ * registers correctly. So we hook it. */
+static int _ptr_access_reg (unw_addr_space_t as, unw_regnum_t reg, unw_word_t *val,
+                 int write, void *arg)
+{
+      registers_info_t regs;
+      ptrace_get_regs(g_current_thread, &regs);
+
+      if (reg < 31) {
+              *val = regs.regs[reg];
+      } else if (reg == 31) {
+              *val = regs.sp;
+      } else if (reg == 32) {
+              *val = regs.pc;
+      } else {
+              return -UNW_EBADREG;
+      }
+      return 0;
+}
+#endif
+
 static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val,
 		int write, void *arg)
 {
@@ -77,10 +99,14 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 		}
 	}
 	*val = ptrace_get_data(g_current_thread, addr);
+	if ((long)*val == -1) {
+		return -UNW_EUNSPEC;
+	}
 #ifdef MLX_FREEBSD
 	unw_word_t high = ptrace_get_data(g_current_thread, addr + 4);
 	*val = (high << 32) | (*val & 0xFFFFFFFFUL);
 #endif
+
 	return 0;
 }
 static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s)
@@ -138,6 +164,9 @@ int ptr_backtrace(unw_word_t *ips, int size)
 
 	/* init at first time */
 	if (list_empty(&space_head)) {
+#ifdef MLX_AARCH64
+		_UPT_accessors.access_reg = _ptr_access_reg;
+#endif
 		_UPT_accessors.access_mem = _ptr_access_mem;
 		_UPT_accessors.find_proc_info = _ptr_find_proc_info;
 

@@ -117,26 +117,34 @@ static inline int is_breakpoint(pid_t pid, uintptr_t address)
 	return ptrace_get_data(pid, address) == 0xE7F001F0;
 }
 
-#elif defined(MLX_ARMv8)
+#elif defined(MLX_AARCH64)
 static inline uintptr_t call_return_address(pid_t pid, registers_info_t *regs)
 {
-	return regs->uregs[30];
+	return regs->regs[30];
 }
 static inline uintptr_t call_return_value(registers_info_t *regs)
 {
-	return regs->uregs[0];
+	return regs->regs[0];
 }
 static inline uintptr_t call_arg1(pid_t pid, registers_info_t *regs)
 {
-	return regs->uregs[0];
+	return regs->regs[0];
 }
 static inline uintptr_t call_arg2(pid_t pid, registers_info_t *regs)
 {
-	return regs->uregs[1];
+	return regs->regs[1];
 }
 static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
 {
-	return 0; // XXX
+	return regs->pc;
+}
+static inline void set_breakpoint(pid_t pid, uintptr_t address, uintptr_t code)
+{
+	ptrace_set_data(pid, address, 0xd4200000);
+}
+static inline int is_breakpoint(pid_t pid, uintptr_t address)
+{
+	return ptrace_get_data(pid, address) == 0xd4200000;
 }
 #endif
 
