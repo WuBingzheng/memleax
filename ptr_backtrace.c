@@ -109,11 +109,17 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 
 	return 0;
 }
-static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s)
+static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s,
+		int new_unw_info_buf)
 {
 	*d = *s;
 #if defined(MLX_X86) || defined(MLX_X86_64)
-	d->unwind_info = malloc(s->unwind_info_size);
+	static char unw_info_buf[100];
+	if (new_unw_info_buf) {
+		d->unwind_info = malloc(s->unwind_info_size);
+	} else {
+		d->unwind_info = unw_info_buf;
+	}
 	memcpy(d->unwind_info, s->unwind_info, s->unwind_info_size);
 #endif
 }
@@ -134,7 +140,7 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 		struct ip_info_s *ii = list_entry(p, struct ip_info_s, hash_node);
 		if (ii->ret < 0) return ii->ret;
 
-		_ptr_unw_proc_info_copy(pi, &ii->pi);
+		_ptr_unw_proc_info_copy(pi, &ii->pi, 0);
 		return ii->ret;
 	}
 
@@ -144,7 +150,7 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 	/* cache miss, query it */
 	ii->ret = _UPT_find_proc_info(as, ip, pi, need_unwind_info, arg);
 	if (ii->ret >= 0) { /* add to cache if success */
-		_ptr_unw_proc_info_copy(&ii->pi, pi);
+		_ptr_unw_proc_info_copy(&ii->pi, pi, 1);
 	}
 	hash_add(ip_info_hash, &ii->hash_node, sizeof(ip));
 	return ii->ret;
