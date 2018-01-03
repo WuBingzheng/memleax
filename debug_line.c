@@ -189,33 +189,33 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 		uintptr_t address, int *lineno)
 {
-        int min = 0;
-        int max = dd->dw_line_nr - 2;
-        while (min <= max) {
-                int mid = (min + max) / 2;
-                Dwarf_Line line1 = dd->dw_lines[mid];
-                Dwarf_Line line2 = dd->dw_lines[mid+1];
+	int min = 0;
+	int max = dd->dw_line_nr - 2;
+	while (min <= max) {
+		int mid = (min + max) / 2;
+		Dwarf_Line line1 = dd->dw_lines[mid];
+		Dwarf_Line line2 = dd->dw_lines[mid+1];
 
-                Dwarf_Addr addr1, addr2;
-                dwarf_lineaddr(line1, &addr1, NULL);
-                dwarf_lineaddr(line2, &addr2, NULL);
-                addr1 += dd->offset;
-                addr2 += dd->offset;
+		Dwarf_Addr addr1, addr2;
+		dwarf_lineaddr(line1, &addr1, NULL);
+		dwarf_lineaddr(line2, &addr2, NULL);
+		addr1 += dd->offset;
+		addr2 += dd->offset;
 
-                if (address < addr1) {
-                        max = mid - 1;
-                } else if (address > addr2) {
-                        min = mid + 1;
-                } else {
-                        Dwarf_Unsigned du_line_no;
-                        dwarf_lineno(line1, &du_line_no, NULL);
-                        *lineno = du_line_no;
+		if (address < addr1) {
+			max = mid - 1;
+		} else if (address > addr2) {
+			min = mid + 1;
+		} else {
+			Dwarf_Unsigned du_line_no;
+			dwarf_lineno(line1, &du_line_no, NULL);
+			*lineno = du_line_no;
 
-                        char *filename;
-                        dwarf_linesrc(line1, &filename, NULL);
-                        return filename + dd->comp_dir_len;
-                }
-        }
+			char *filename;
+			dwarf_linesrc(line1, &filename, NULL);
+			return filename + dd->comp_dir_len;
+		}
+	}
 
 	return NULL;
 }

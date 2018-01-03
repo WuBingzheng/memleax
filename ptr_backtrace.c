@@ -68,21 +68,21 @@ void ptr_maps_build(pid_t pid)
 /* There maybe a bug in libunwind-1.12.1 which dose not accesss aarch64
  * registers correctly. So we hook it. */
 static int _ptr_access_reg (unw_addr_space_t as, unw_regnum_t reg, unw_word_t *val,
-                 int write, void *arg)
+		int write, void *arg)
 {
-      registers_info_t regs;
-      ptrace_get_regs(g_current_thread, &regs);
+	registers_info_t regs;
+	ptrace_get_regs(g_current_thread, &regs);
 
-      if (reg < 31) {
-              *val = regs.regs[reg];
-      } else if (reg == 31) {
-              *val = regs.sp;
-      } else if (reg == 32) {
-              *val = regs.pc;
-      } else {
-              return -UNW_EBADREG;
-      }
-      return 0;
+	if (reg < 31) {
+		*val = regs.regs[reg];
+	} else if (reg == 31) {
+		*val = regs.sp;
+	} else if (reg == 32) {
+		*val = regs.pc;
+	} else {
+		return -UNW_EBADREG;
+	}
+	return 0;
 }
 #endif
 
