@@ -1,11 +1,11 @@
 Name:           memleax
-Version:        1.1.0
+Version:        1.1.1
 Release:        1%{?dist}
 Summary:        Debugs memory leak of a running process
 
 License:        GPLv2
 URL:            http://wubingzheng.github.io/memleax/
-Source0:        https://github.com/WuBingzheng/memleax/archive/v1.1.0.tar.gz
+Source0:        https://github.com/WuBingzheng/memleax/archive/v1.1.1.tar.gz
 
 BuildRequires:  libdwarf-devel, elfutils-libelf-devel, libunwind-devel
 
@@ -36,6 +36,8 @@ make install DESTDIR=%{buildroot}
 
 
 %changelog
+* Thu Jan 04 2018 Wu Bingzheng <wubingzheng@gmail.com> - 1.1.1-1.el7.centos
+- bugfix: memory leak at unwind cache
 * Sun Nov 05 2017 Wu Bingzheng <wubingzheng@gmail.com> - 1.1.0-1.el7.centos
 - support x86, armv7, and aarch64 for GNU/Linux, and i386 for FreeBSD
 * Sat Feb 28 2017 Wu Bingzheng <wubingzheng@gmail.com> - 1.0.3-1.el7.centos
