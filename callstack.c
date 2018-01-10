@@ -136,6 +136,7 @@ void callstack_report(void)
 				cs->free_count ? cs->free_total / cs->free_count : 0,
 				cs->unfree_max);
 		callstack_print(cs);
+		memblock_dump_expire(cs);
 		printf("\n");
 	}
 }
