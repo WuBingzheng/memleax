@@ -27,12 +27,12 @@
 #if defined(MLX_WITH_LIBDW) /* MLX_WITH_LIBDW */
 #include <libdw.h>
 struct dwarf_die_s {
-	Dwarf_Addr	start;
-	Dwarf_Addr	end;
-	Dwarf_Addr	offset;
-	Dwarf_Lines	*dw_lines;
-	size_t		dw_line_nr;
-	int		comp_dir_len;
+	Dwarf_Addr   start;
+	Dwarf_Addr   end;
+	Dwarf_Addr   offset;
+	Dwarf_Lines *dw_lines;
+	size_t       dw_line_nr;
+	int          comp_dir_len;
 };
 
 static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
@@ -42,24 +42,23 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 	int count = 0;
 
 	Dwarf *dbg = dwarf_begin(fd, DWARF_C_READ);
-	if (dbg == NULL) {
+	if(dbg == NULL) {
 		return -1;
 	}
 
 	Dwarf_Off off, noff = 0;
-	size_t cuhl;
-	while (dwarf_nextcu(dbg, off=noff, &noff, &cuhl, NULL, NULL, NULL) == 0) {
-
-		Dwarf_Die cu_die;
+	size_t    cuhl;
+	while(dwarf_nextcu(dbg, off = noff, &noff, &cuhl, NULL, NULL, NULL) == 0) {
+		Dwarf_Die  cu_die;
 		Dwarf_Die *diep = dwarf_offdie(dbg, off + cuhl, &cu_die);
-		if (diep == NULL) {
+		if(diep == NULL) {
 			continue;
 		}
 
 		Dwarf_Lines *linebuf;
-		size_t linecount = 0;
+		size_t       linecount = 0;
 		dwarf_getsrclines(diep, &linebuf, &linecount);
-		if (linecount == 0) {
+		if(linecount == 0) {
 			continue;
 		}
 
@@ -79,13 +78,12 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 	return count;
 }
 
-static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
-		uintptr_t address, int *lineno)
+static const char *debug_line_search_dwdie(struct dwarf_die_s *dd, uintptr_t address, int *lineno)
 {
 	int min = 0;
 	int max = dd->dw_line_nr - 2;
-	while (min <= max) {
-		int mid = (min + max) / 2;
+	while(min <= max) {
+		int         mid = (min + max) / 2;
 		Dwarf_Line *line1 = dwarf_onesrcline(dd->dw_lines, mid);
 		Dwarf_Line *line2 = dwarf_onesrcline(dd->dw_lines, mid + 1);
 
@@ -95,9 +93,9 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 		addr1 += dd->offset;
 		addr2 += dd->offset;
 
-		if (address < addr1) {
+		if(address < addr1) {
 			max = mid - 1;
-		} else if (address > addr2) {
+		} else if(address > addr2) {
 			min = mid + 1;
 		} else {
 			int du_line_no;
@@ -116,12 +114,12 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 
 #include <libdwarf.h>
 struct dwarf_die_s {
-	Dwarf_Addr	start;
-	Dwarf_Addr	end;
-	Dwarf_Addr	offset;
-	Dwarf_Line	*dw_lines;
-	Dwarf_Signed	dw_line_nr;
-	int		comp_dir_len;
+	Dwarf_Addr   start;
+	Dwarf_Addr   end;
+	Dwarf_Addr   offset;
+	Dwarf_Line * dw_lines;
+	Dwarf_Signed dw_line_nr;
+	int          comp_dir_len;
 };
 
 static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
@@ -132,32 +130,30 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 
 	Dwarf_Debug dbg;
 	Dwarf_Error error;
-	int res = dwarf_init(fd, DW_DLC_READ, 0, 0, &dbg, &error);
+	int         res = dwarf_init(fd, DW_DLC_READ, 0, 0, &dbg, &error);
 	if(res != DW_DLV_OK) {
 		return -1;
 	}
 
 	Dwarf_Unsigned next_cu_offset = 0;
-	while (dwarf_next_cu_header(dbg, NULL, NULL, NULL, NULL,
-				&next_cu_offset, &error) == DW_DLV_OK) {
-
+	while(dwarf_next_cu_header(dbg, NULL, NULL, NULL, NULL, &next_cu_offset, &error) == DW_DLV_OK) {
 		Dwarf_Die cu_die = NULL;
-		if (dwarf_siblingof(dbg, NULL, &cu_die, &error) != DW_DLV_OK) {
+		if(dwarf_siblingof(dbg, NULL, &cu_die, &error) != DW_DLV_OK) {
 			printf("Warning: dwarf_siblingof error: %s\n", dwarf_errmsg(error));
 			return -1;
 		}
 
 		Dwarf_Signed linecount = 0;
-		Dwarf_Line *linebuf = NULL;
+		Dwarf_Line * linebuf = NULL;
 		res = dwarf_srclines(cu_die, &linebuf, &linecount, &error);
-		if (res == DW_DLV_ERROR) {
+		if(res == DW_DLV_ERROR) {
 			printf("Warning: dwarf_srclines error: %s\n", dwarf_errmsg(error));
 			return -1;
 		}
-		if (res == DW_DLV_NO_ENTRY) {
+		if(res == DW_DLV_NO_ENTRY) {
 			continue;
 		}
-		if (linecount == 0) {
+		if(linecount == 0) {
 			continue;
 		}
 
@@ -173,7 +169,7 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 
 		/* get compile directory length */
 		Dwarf_Attribute comp_dir_attr = 0;
-		char *dir = NULL;
+		char *          dir = NULL;
 		dwarf_attr(cu_die, DW_AT_comp_dir, &comp_dir_attr, &error);
 		dwarf_formstring(comp_dir_attr, &dir, &error);
 		dd->comp_dir_len = dir ? strlen(dir) + 1 : 0;
@@ -186,36 +182,35 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 	return count;
 }
 
-static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
-		uintptr_t address, int *lineno)
+static const char *debug_line_search_dwdie(struct dwarf_die_s *dd, uintptr_t address, int *lineno)
 {
-        int min = 0;
-        int max = dd->dw_line_nr - 2;
-        while (min <= max) {
-                int mid = (min + max) / 2;
-                Dwarf_Line line1 = dd->dw_lines[mid];
-                Dwarf_Line line2 = dd->dw_lines[mid+1];
+	int min = 0;
+	int max = dd->dw_line_nr - 2;
+	while(min <= max) {
+		int        mid = (min + max) / 2;
+		Dwarf_Line line1 = dd->dw_lines[mid];
+		Dwarf_Line line2 = dd->dw_lines[mid + 1];
 
-                Dwarf_Addr addr1, addr2;
-                dwarf_lineaddr(line1, &addr1, NULL);
-                dwarf_lineaddr(line2, &addr2, NULL);
-                addr1 += dd->offset;
-                addr2 += dd->offset;
+		Dwarf_Addr addr1, addr2;
+		dwarf_lineaddr(line1, &addr1, NULL);
+		dwarf_lineaddr(line2, &addr2, NULL);
+		addr1 += dd->offset;
+		addr2 += dd->offset;
 
-                if (address < addr1) {
-                        max = mid - 1;
-                } else if (address > addr2) {
-                        min = mid + 1;
-                } else {
-                        Dwarf_Unsigned du_line_no;
-                        dwarf_lineno(line1, &du_line_no, NULL);
-                        *lineno = du_line_no;
+		if(address < addr1) {
+			max = mid - 1;
+		} else if(address > addr2) {
+			min = mid + 1;
+		} else {
+			Dwarf_Unsigned du_line_no;
+			dwarf_lineno(line1, &du_line_no, NULL);
+			*lineno = du_line_no;
 
-                        char *filename;
-                        dwarf_linesrc(line1, &filename, NULL);
-                        return filename + dd->comp_dir_len;
-                }
-        }
+			char *filename;
+			dwarf_linesrc(line1, &filename, NULL);
+			return filename + dd->comp_dir_len;
+		}
+	}
 
 	return NULL;
 }
@@ -224,14 +219,14 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 static int debug_line_build_file(const char *path, size_t start, size_t end)
 {
 	int fd = open(path, O_RDONLY);
-	if (fd < 0) {
+	if(fd < 0) {
 		return -1;
 	}
 
 	/* get offset */
 	elf_version(EV_CURRENT);
 	Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
-	if (elf == NULL) {
+	if(elf == NULL) {
 		close(fd);
 		return -1;
 	}
@@ -255,16 +250,16 @@ static int dwarf_die_cmp(const void *a, const void *b)
 void debug_line_build(pid_t pid)
 {
 	const char *path, *debugp;
-	size_t start, end;
-	int exe_self;
-	while ((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
+	size_t      start, end;
+	int         exe_self;
+	while((path = proc_maps(pid, &start, &end, &exe_self)) != NULL) {
 		debug_try_init(path, exe_self);
-		while ((debugp = debug_try_get()) != NULL) {
-			if (debug_line_build_file(debugp, start, end) > 0) {
+		while((debugp = debug_try_get()) != NULL) {
+			if(debug_line_build_file(debugp, start, end) > 0) {
 				break;
 			}
 		}
-		if (exe_self && debugp == NULL) {
+		if(exe_self && debugp == NULL) {
 			printf("Warning: no debug-line found for %s\n", path);
 		}
 	}
@@ -276,21 +271,21 @@ void debug_line_build(pid_t pid)
 const char *debug_line_search(uintptr_t address, int *lineno)
 {
 	/* search dwarf-die */
-	int min = 0, max = g_dwarf_dies.item_num - 1;
+	int                 min = 0, max = g_dwarf_dies.item_num - 1;
 	struct dwarf_die_s *table = g_dwarf_dies.data;
 	struct dwarf_die_s *dd;
-	while (min <= max) {
+	while(min <= max) {
 		int mid = (min + max) / 2;
 		dd = &table[mid];
-		if (address < dd->start) {
+		if(address < dd->start) {
 			max = mid - 1;
-		} else if (address > dd->end) {
+		} else if(address > dd->end) {
 			min = mid + 1;
 		} else {
 			break;
 		}
 	}
-	if (min > max) { /* not found */
+	if(min > max) { /* not found */
 		return NULL;
 	}
 

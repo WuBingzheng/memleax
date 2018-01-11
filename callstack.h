@@ -8,18 +8,18 @@
 #define BACKTRACE_MAX 50
 
 struct callstack_s {
-	int		id;
+	int id;
 
-	int		alloc_count, free_count;
-	int		expired_count, free_expired_count;
-	int		alloc_size, free_size;
-	int		expired_size, free_expired_size;
-	int		free_min, free_max, free_total;
-	int		unfree_max;
+	int alloc_count, free_count;
+	int expired_count, free_expired_count;
+	int alloc_size, free_size;
+	int expired_size, free_expired_size;
+	int free_min, free_max, free_total;
+	int unfree_max;
 
-	int		ip_num;
+	int               ip_num;
 	struct hlist_node hash_node;
-	unw_word_t	ips[0];
+	unw_word_t        ips[0];
 };
 
 struct callstack_s *callstack_current(void);

@@ -2,15 +2,16 @@
 #define MLD_BREAKPOINT_H
 
 #include <sys/types.h>
+#include <stdint.h>
 
-typedef int (*bp_handler_f) (uintptr_t, uintptr_t, uintptr_t);
+typedef int (*bp_handler_f)(uintptr_t, uintptr_t, uintptr_t);
 
 struct breakpoint_s {
-	const char	*name;
-	bp_handler_f	handler;
+	const char * name;
+	bp_handler_f handler;
 
-	uintptr_t	entry_address;
-	uintptr_t	entry_code;
+	uintptr_t entry_address;
+	uintptr_t entry_code;
 };
 
 void breakpoint_init(pid_t pid);

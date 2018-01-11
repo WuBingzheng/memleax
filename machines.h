@@ -76,11 +76,11 @@ static inline uintptr_t pc_unwind(pid_t pid, registers_info_t *regs)
 }
 static inline void set_breakpoint(pid_t pid, uintptr_t address, uintptr_t code)
 {
-  #ifdef MLX_LINUX
+#ifdef MLX_LINUX
 	ptrace_set_data(pid, address, (code & 0xFFFFFFFFFFFFFF00UL) | 0xCC);
-  #else // MLX_FREEBSD
+#else // MLX_FREEBSD
 	ptrace_set_data(pid, address, (code & 0xFFFFFF00U) | 0xCC);
-  #endif
+#endif
 }
 static inline int is_breakpoint(pid_t pid, uintptr_t address)
 {
