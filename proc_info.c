@@ -18,22 +18,22 @@
 const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 {
 	static FILE *filp = NULL;
-	static char exe_name[1024];
-	static char ret_path[1024];
+	static char  exe_name[1024];
+	static char  ret_path[1024];
 
 	/* first, init */
-	if (filp == NULL) {
+	if(filp == NULL) {
 		char pname[100];
 		sprintf(pname, "/proc/%d/maps", pid);
 		filp = fopen(pname, "r");
-		if (filp == NULL) {
+		if(filp == NULL) {
 			perror("Error in open /proc/pid/maps");
 			exit(3);
 		}
 
 		sprintf(pname, "/proc/%d/exe", pid);
 		int exe_len = readlink(pname, exe_name, sizeof(exe_name));
-		if (exe_len < 0) {
+		if(exe_len < 0) {
 			perror("error in open /proc/pid/exe");
 			exit(3);
 		}
@@ -44,12 +44,12 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 	char line[1024];
 	char perms[5];
 	char deleted[100];
-	int ia, ib, ic, id;
-	while (fgets(line, sizeof(line), filp) != NULL) {
-		int ret = sscanf(line, "%zx-%zx %s %x %x:%x %d %s %s",
-				start, end, perms, &ia, &ib, &ic, &id, ret_path, deleted);
-		if (ret == 8 && perms[2] == 'x' && ret_path[0] == '/') {
-			if (exe_self != NULL) {
+	int  ia, ib, ic, id;
+	while(fgets(line, sizeof(line), filp) != NULL) {
+		int ret =
+		sscanf(line, "%zx-%zx %s %x %x:%x %d %s %s", start, end, perms, &ia, &ib, &ic, &id, ret_path, deleted);
+		if(ret == 8 && perms[2] == 'x' && ret_path[0] == '/') {
+			if(exe_self != NULL) {
 				*exe_self = (strcmp(ret_path, exe_name) == 0);
 			}
 			return ret_path;
@@ -65,11 +65,11 @@ pid_t proc_tasks(pid_t pid)
 {
 	static DIR *dirp = NULL;
 
-	if (dirp == NULL) {
+	if(dirp == NULL) {
 		char tname[100];
 		sprintf(tname, "/proc/%d/task", pid);
 		dirp = opendir(tname);
-		if (dirp == NULL) {
+		if(dirp == NULL) {
 			perror("Error in open /proc/pid/tasks");
 			exit(3);
 		}
@@ -78,7 +78,7 @@ pid_t proc_tasks(pid_t pid)
 	struct dirent *e;
 	while((e = readdir(dirp)) != NULL) {
 		pid_t task_id = atoi(e->d_name);
-		if (task_id != 0) {
+		if(task_id != 0) {
 			return task_id;
 		}
 	}
@@ -93,14 +93,14 @@ int proc_task_check(pid_t pid, pid_t child)
 	char tname[100];
 	sprintf(tname, "/proc/%d/task", pid);
 	DIR *dirp = opendir(tname);
-	if (dirp == NULL) {
+	if(dirp == NULL) {
 		perror("Error in open /proc/pid/tasks");
 		exit(3);
 	}
 
 	struct dirent *e;
 	while((e = readdir(dirp)) != NULL) {
-		if (atoi(e->d_name) == child) {
+		if(atoi(e->d_name) == child) {
 			closedir(dirp);
 			return 1;
 		}
@@ -118,13 +118,13 @@ int proc_task_check(pid_t pid, pid_t child)
 const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 {
 	static struct kinfo_vmentry *freep = NULL;
-	static unsigned int i, cnt;
-	static char *exe_name;
+	static unsigned int          i, cnt;
+	static char *                exe_name;
 
 	/* first, init */
-	if (freep == NULL) {
+	if(freep == NULL) {
 		struct kinfo_proc *ki = kinfo_getproc(pid);
-		if (ki == NULL) {
+		if(ki == NULL) {
 			perror("Error in get process info");
 			exit(6);
 		}
@@ -132,13 +132,13 @@ const char *proc_maps(pid_t pid, size_t *start, size_t *end, int *exe_self)
 		exe_name = ki->ki_comm;
 	}
 
-	while (i < cnt) {
+	while(i < cnt) {
 		struct kinfo_vmentry *kve = &freep[i++];
-		if ((kve->kve_protection & KVME_PROT_EXEC) && kve->kve_path[0] == '/') {
+		if((kve->kve_protection & KVME_PROT_EXEC) && kve->kve_path[0] == '/') {
 			*start = kve->kve_start;
 			*end = kve->kve_end;
 
-			if (exe_self != NULL) {
+			if(exe_self != NULL) {
 				*exe_self = (strcmp(exe_name, strrchr(kve->kve_path, '/') + 1) == 0);
 			}
 			return kve->kve_path;

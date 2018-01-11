@@ -17,19 +17,19 @@
 #include <elf.h>
 #include <sys/uio.h>
 
-  #ifdef MLX_ARMv7
+#ifdef MLX_ARMv7
 typedef struct user_regs registers_info_t;
-  #else
+#else
 typedef struct user_regs_struct registers_info_t;
-  #endif
+#endif
 
 static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 {
 #ifdef PTRACE_GETREGS
 	ptrace(PTRACE_GETREGS, pid, 0, regs);
 #else
-	long regset = NT_PRSTATUS;
-	struct iovec ioVec;
+	long                        regset = NT_PRSTATUS;
+	struct iovec                ioVec;
 	ioVec.iov_base = regs;
 	ioVec.iov_len = sizeof(*regs);
 	ptrace(PTRACE_GETREGSET, pid, (void *)regset, &ioVec);
@@ -40,7 +40,7 @@ static inline void ptrace_set_regs(pid_t pid, registers_info_t *regs)
 #ifdef PTRACE_GETREGS
 	ptrace(PTRACE_SETREGS, pid, 0, regs);
 #else
-	long regset = NT_PRSTATUS;
+	long         regset = NT_PRSTATUS;
 	struct iovec ioVec;
 	ioVec.iov_base = regs;
 	ioVec.iov_len = sizeof(*regs);
@@ -73,17 +73,14 @@ static inline void ptrace_continue(pid_t pid, int signum)
 }
 static inline void ptrace_attach(pid_t pid)
 {
-	if (ptrace(PTRACE_ATTACH, pid, 0, 0) != 0) {
+	if(ptrace(PTRACE_ATTACH, pid, 0, 0) != 0) {
 		perror("== Attach process error:");
 		exit(4);
 	}
 }
 static inline void ptrace_trace_child(pid_t pid)
 {
-	ptrace(PTRACE_SETOPTIONS, pid, 0,
-			PTRACE_O_TRACECLONE |
-			PTRACE_O_TRACEVFORK |
-			PTRACE_O_TRACEFORK);
+	ptrace(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACECLONE | PTRACE_O_TRACEVFORK | PTRACE_O_TRACEFORK);
 }
 static inline void ptrace_detach(pid_t pid, int signum)
 {
@@ -120,7 +117,7 @@ static inline void ptrace_continue(pid_t pid, int signum)
 }
 static inline void ptrace_attach(pid_t pid)
 {
-	if (ptrace(PT_ATTACH, pid, 0, 0) != 0) {
+	if(ptrace(PT_ATTACH, pid, 0, 0) != 0) {
 		perror("== Attach process error:");
 		exit(4);
 	}

@@ -16,9 +16,9 @@
 static inline uint32_t hash_slot(void *key, int len)
 {
 	uint32_t *p = key;
-	uint32_t n = 0;
-	int i;
-	for (i = 0; i < len / sizeof(uint32_t); i++) {
+	uint32_t  n = 0;
+	int       i;
+	for(i = 0; i < len / sizeof(uint32_t); i++) {
 		n ^= p[i];
 	}
 	return n % HASH_SIZE;
@@ -35,22 +35,21 @@ static inline void hash_delete(struct hlist_node *node)
 	hlist_del(node);
 }
 
-static inline struct hlist_node *hash_search(
-		struct hlist_head *hash, void *vkey, int len)
+static inline struct hlist_node *hash_search(struct hlist_head *hash, void *vkey, int len)
 {
 	uint32_t n = hash_slot(vkey, len);
 
 	struct hlist_node *p;
 	hlist_for_each(p, &hash[n]) {
-		if (memcmp(p + 1, vkey, len) == 0) {
+		if(memcmp(p + 1, vkey, len) == 0) {
 			return p;
 		}
 	}
 	return NULL;
 }
 
-#define hash_for_each(p, i, hash) \
-	for (i = 0; i < HASH_SIZE; i++) \
+#define hash_for_each(p, i, hash)  \
+	for(i = 0; i < HASH_SIZE; i++) \
 		hlist_for_each(p, &hash[i])
 
 #endif

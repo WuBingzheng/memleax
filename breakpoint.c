@@ -40,7 +40,7 @@ static int bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t s
 {
 	log_debug("-- realloc pointer:%lx->%lx size:%ld\n", old_pointer, new_pointer, size);
 
-	if (new_pointer == old_pointer) {
+	if(new_pointer == old_pointer) {
 		memblock_update_size(memblock_search(old_pointer), size);
 		return 0;
 	} else {
@@ -57,13 +57,12 @@ static int bph_calloc(uintptr_t pointer, uintptr_t nmemb, uintptr_t size)
 }
 
 
-static void do_breakpoint_init(pid_t pid, struct breakpoint_s *bp,
-		const char *name, bp_handler_f handler)
+static void do_breakpoint_init(pid_t pid, struct breakpoint_s *bp, const char *name, bp_handler_f handler)
 {
 	bp->name = name;
 	bp->handler = handler;
 	bp->entry_address = symtab_by_name(name);
-	if (bp->entry_address == 0) {
+	if(bp->entry_address == 0) {
 		fprintf(stderr, "not found api: %s\n", name);
 		exit(3);
 	}
@@ -86,7 +85,7 @@ void breakpoint_init(pid_t pid)
 void breakpoint_cleanup(pid_t pid)
 {
 	int i;
-	for (i = 0; i < 4; i++) {
+	for(i = 0; i < 4; i++) {
 		struct breakpoint_s *bp = &g_breakpoints[i];
 		ptrace_set_data(pid, bp->entry_address, bp->entry_code);
 	}
@@ -95,8 +94,8 @@ void breakpoint_cleanup(pid_t pid)
 struct breakpoint_s *breakpoint_by_entry(uintptr_t address)
 {
 	int i;
-	for (i = 0; i < 4; i++) {
-		if (address == g_breakpoints[i].entry_address) {
+	for(i = 0; i < 4; i++) {
+		if(address == g_breakpoints[i].entry_address) {
 			return &g_breakpoints[i];
 		}
 	}
