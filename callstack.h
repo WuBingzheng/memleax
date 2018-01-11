@@ -14,7 +14,7 @@ struct callstack_s {
 	int		expired_count, free_expired_count;
 	int		alloc_size, free_size;
 	int		expired_size, free_expired_size;
-	int		free_min, free_max, free_total;
+    time_t	free_min, free_max, free_total;
 	int		unfree_max;
 
 	int		ip_num;

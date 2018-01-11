@@ -132,8 +132,8 @@ void callstack_report(void)
 				cs->free_expired_count, cs->free_expired_size,
 				cs->alloc_count, cs->alloc_size,
 				cs->free_count, cs->free_size,
-				cs->free_min, cs->free_max,
-				cs->free_count ? cs->free_total / cs->free_count : 0,
+                                (int)cs->free_min, (int)cs->free_max,
+                                cs->free_count ? (int)cs->free_total / cs->free_count : 0,
 				cs->unfree_max);
 		callstack_print(cs);
 		printf("\n");
