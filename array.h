@@ -8,6 +8,9 @@
 #ifndef MLD_ARRAY_H
 #define MLD_ARRAY_H
 
+/**
+ * @brief The array_s struct
+ */
 struct array_s {
 	int	item_max;
 	int	item_num;
@@ -15,15 +18,36 @@ struct array_s {
 	void	*data;
 };
 
+/**
+ * @brief
+ * @param name
+ * @param type
+ * @param init_max
+ */
 #define ARRAY(name, type, init_max) \
 	struct array_s name = {init_max, 0, sizeof(type), NULL}
 
+/**
+ * @brief
+ * @param pos
+ * @param a
+ */
 #define array_out(pos, a)  \
 	((char *)pos >= (char *)(a)->data + ((a)->item_size * (a)->item_num))
 
+/**
+ * @brief
+ * @param pos
+ * @param a
+ */
 #define array_for_each(pos, a) \
 	for (pos = (a)->data; !array_out(pos, a); pos++)
 
+/**
+ * @brief array_push
+ * @param a
+ * @return
+ */
 static inline void *array_push(struct array_s *a)
 {
 	if (a->data == NULL) {
@@ -40,11 +64,20 @@ static inline void *array_push(struct array_s *a)
 	return (char *)a->data + (a->item_size * a->item_num++);
 }
 
+/**
+ * @brief array_sort
+ * @param a
+ */
 static inline void array_sort(struct array_s *a, int (*compar)(const void *, const void *))
 {
 	qsort(a->data, a->item_num, a->item_size, compar);
 }
 
+/**
+ * @brief array_last
+ * @param a
+ * @return
+ */
 static inline void *array_last(struct array_s *a)
 {
 	if (a->item_num == 0) {

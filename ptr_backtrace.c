@@ -22,14 +22,26 @@
 #include "memleax.h"
 #include "ptrace_utils.h"
 
-
+/**
+ *
+ */
 static LIST_HEAD(g_map_sections);
+
+/**
+ * @brief The map_section_s struct
+ */
 struct map_section_s {
 	struct list_head	list_node;
 	uintptr_t		start, end;
 	unw_word_t		data[0];
 };
 
+/**
+ * @brief ptr_maps_build_file
+ * @param path
+ * @param start
+ * @param end
+ */
 static void ptr_maps_build_file(const char *path, size_t start, size_t end)
 {
 	/* create map-section */
@@ -67,6 +79,16 @@ void ptr_maps_build(pid_t pid)
 #ifdef MLX_AARCH64
 /* There maybe a bug in libunwind-1.12.1 which dose not accesss aarch64
  * registers correctly. So we hook it. */
+
+/**
+ * @brief _ptr_access_reg
+ * @param as
+ * @param reg
+ * @param val
+ * @param write
+ * @param arg
+ * @return
+ */
 static int _ptr_access_reg (unw_addr_space_t as, unw_regnum_t reg, unw_word_t *val,
                  int write, void *arg)
 {
@@ -86,6 +108,15 @@ static int _ptr_access_reg (unw_addr_space_t as, unw_regnum_t reg, unw_word_t *v
 }
 #endif
 
+/**
+ * @brief _ptr_access_mem
+ * @param as
+ * @param addr
+ * @param val
+ * @param write
+ * @param arg
+ * @return
+ */
 static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val,
 		int write, void *arg)
 {
@@ -109,6 +140,13 @@ static int _ptr_access_mem(unw_addr_space_t as, unw_word_t addr, unw_word_t *val
 
 	return 0;
 }
+
+/**
+ * @brief _ptr_unw_proc_info_copy
+ * @param d
+ * @param s
+ * @param new_unw_info_buf
+ */
 static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s,
 		int new_unw_info_buf)
 {
@@ -123,6 +161,16 @@ static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s,
 	memcpy(d->unwind_info, s->unwind_info, s->unwind_info_size);
 #endif
 }
+
+/**
+ * @brief _ptr_find_proc_info
+ * @param as
+ * @param ip
+ * @param pi
+ * @param need_unwind_info
+ * @param arg
+ * @return
+ */
 static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_info_t *pi,
 		int need_unwind_info, void *arg)
 {
@@ -156,12 +204,16 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 	return ii->ret;
 }
 
+/**
+ * @brief The thread_space_s struct
+ */
 struct thread_space_s {
 	struct list_head	list_node;
 	unw_addr_space_t	uspace;
 	void			*upt_info;
 	pid_t			thread_id;
 };
+
 int ptr_backtrace(unw_word_t *ips, int size)
 {
 #define SPACE_MAX 10

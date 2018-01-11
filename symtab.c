@@ -21,6 +21,9 @@
 #include "proc_info.h"
 #include "debug_file.h"
 
+/**
+ * @brief The symbol_s struct
+ */
 struct symbol_s {
 	uintptr_t	address;
 	size_t		size;
@@ -28,8 +31,19 @@ struct symbol_s {
 	char		*name;
 };
 
+/**
+ *
+ */
 static ARRAY(g_symbol_table, struct symbol_s, 1000);
 
+/**
+ * @brief symtab_build_section
+ * @param elf
+ * @param section
+ * @param offset
+ * @param base_addr
+ * @return
+ */
 static int symtab_build_section(Elf *elf, Elf_Scn *section,
 		uintptr_t offset, uintptr_t base_addr)
 {
@@ -72,6 +86,11 @@ static int symtab_build_section(Elf *elf, Elf_Scn *section,
 	return count;
 }
 
+/**
+ * @brief symtab_elf_base
+ * @param elf
+ * @return
+ */
 static uintptr_t symtab_elf_base(Elf *elf)
 {
 	size_t i, n;
@@ -91,6 +110,13 @@ static uintptr_t symtab_elf_base(Elf *elf)
 	return 0;
 }
 
+/**
+ * @brief symtab_build_file
+ * @param path
+ * @param start
+ * @param end
+ * @return
+ */
 static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
 {
 	/* open file */
@@ -127,6 +153,12 @@ static int symtab_build_file(const char *path, uintptr_t start, uintptr_t end)
 	return count;
 }
 
+/**
+ * @brief symbol_cmp
+ * @param a
+ * @param b
+ * @return
+ */
 static int symbol_cmp(const void *a, const void *b)
 {
 	const struct symbol_s *sa = a;

@@ -17,7 +17,13 @@
 #include "debug_file.h"
 #include "memleax.h"
 
-
+/**
+ * @brief gnu_debuglink_crc32
+ * @param crc
+ * @param buf
+ * @param len
+ * @return
+ */
 static uint32_t gnu_debuglink_crc32 (uint32_t crc, unsigned char *buf, size_t len)
 {
 	static const uint32_t crc32_table[256] = {
@@ -82,6 +88,11 @@ static uint32_t gnu_debuglink_crc32 (uint32_t crc, unsigned char *buf, size_t le
 	return ~crc & 0xffffffff;
 }
 
+/**
+ * @brief file_crc32
+ * @param fd
+ * @return
+ */
 static uint32_t file_crc32(int fd)
 {
 	int rlen;
@@ -94,6 +105,14 @@ static uint32_t file_crc32(int fd)
 	return crc32;
 }
 
+/**
+ * @brief elf_section_data
+ * @param fd
+ * @param name
+ * @param out_buf
+ * @param out_size
+ * @return
+ */
 static int elf_section_data(int fd, const char *name, uint8_t *out_buf, int out_size)
 {
 	elf_version(EV_CURRENT);
@@ -133,6 +152,12 @@ static int elf_section_data(int fd, const char *name, uint8_t *out_buf, int out_
 	return ret;
 }
 
+/**
+ * @brief elf_build_id
+ * @param fd
+ * @param build_id
+ * @return
+ */
 static int elf_build_id(int fd, uint8_t *build_id)
 {
 	uint8_t buffer[1000];
@@ -144,6 +169,12 @@ static int elf_build_id(int fd, uint8_t *build_id)
 	return buildid_len;
 }
 
+/**
+ * @brief elf_debug_link
+ * @param fd
+ * @param fname
+ * @return
+ */
 static uint32_t elf_debug_link(int fd, char *fname)
 {
 	uint8_t buffer[1000];
@@ -154,16 +185,46 @@ static uint32_t elf_debug_link(int fd, char *fname)
 	return *(uint32_t *)(buffer + ((strlen(fname) + 4) & 0xFFFFFFFCU));
 }
 
-
+/**
+ * @brief g_path
+ */
 static char g_path[1024];
+
+/**
+ * @brief g_dir
+ */
 static char g_dir[1024];
+
+/**
+ * @brief g_index
+ */
 static int g_index, g_exe_self;
 
+/**
+ * @brief g_build_id
+ */
 static uint8_t g_build_id[100];
+
+/**
+ * @brief g_buildid_len
+ */
 static int g_buildid_len;
+
+/**
+ * @brief g_debug_fname
+ */
 static char g_debug_fname[1024];
+
+/**
+ * @brief g_debug_crc32
+ */
 static uint32_t g_debug_crc32;
 
+/**
+ * @brief debug_valid
+ * @param debug_path
+ * @return
+ */
 static int debug_valid(const char *debug_path)
 {
 	int fd = open(debug_path, O_RDONLY);
@@ -197,7 +258,6 @@ static int debug_valid(const char *debug_path)
 	printf("Warning: use debug file %s to %s without checking\n", debug_path, g_path);
 	return 1;
 }
-
 
 void debug_try_init(const char *path, int exe_self)
 {

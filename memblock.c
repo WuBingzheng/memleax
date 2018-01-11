@@ -14,6 +14,9 @@
 #include "memblock.h"
 #include "callstack.h"
 
+/**
+ * @brief The memblock_s struct
+ */
 struct memblock_s {
 	struct list_head	list_node;
 	struct hlist_node	hash_node;
@@ -24,9 +27,19 @@ struct memblock_s {
 	struct callstack_s	*callstack;
 };
 
+/**
+ * @brief g_memblock_hash
+ */
 static struct hlist_head g_memblock_hash[HASH_SIZE];
 
+/**
+ *
+ */
 static LIST_HEAD(g_memblock_active);
+
+/**
+ *
+ */
 static LIST_HEAD(g_memblock_expire);
 
 int memblock_new(uintptr_t pointer, size_t size)
@@ -58,7 +71,11 @@ int memblock_new(uintptr_t pointer, size_t size)
 	return 0;
 }
 
+/**
+ *
+ */
 #define DONOT_SHOW_AFTER_FREE_EXPIRES 3
+
 void memblock_delete(struct memblock_s *mb)
 {
 	if (mb == NULL) {
