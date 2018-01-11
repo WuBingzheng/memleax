@@ -2,6 +2,7 @@
 #define MLD_BREAKPOINT_H
 
 #include <sys/types.h>
+#include <stdint.h>
 
 typedef int (*bp_handler_f) (uintptr_t, uintptr_t, uintptr_t);
 
