@@ -25,7 +25,12 @@
 #include "debug_file.h"
 
 #if defined(MLX_WITH_LIBDW) /* MLX_WITH_LIBDW */
+
 #include <libdw.h>
+
+/**
+ * @brief The dwarf_die_s struct
+ */
 struct dwarf_die_s {
 	Dwarf_Addr	start;
 	Dwarf_Addr	end;
@@ -35,8 +40,17 @@ struct dwarf_die_s {
 	int		comp_dir_len;
 };
 
+/**
+ *
+ */
 static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
 
+/**
+ * @brief debug_line_build_dwarf
+ * @param fd
+ * @param offset
+ * @return
+ */
 static int debug_line_build_dwarf(int fd, size_t offset)
 {
 	int count = 0;
@@ -79,6 +93,13 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 	return count;
 }
 
+/**
+ * @brief debug_line_search_dwdie
+ * @param dd
+ * @param address
+ * @param lineno
+ * @return
+ */
 static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 		uintptr_t address, int *lineno)
 {
@@ -115,6 +136,10 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 /* MLX_WITH_LIBDWARF */
 
 #include <libdwarf.h>
+
+/**
+ * @brief The dwarf_die_s struct
+ */
 struct dwarf_die_s {
 	Dwarf_Addr	start;
 	Dwarf_Addr	end;
@@ -124,8 +149,17 @@ struct dwarf_die_s {
 	int		comp_dir_len;
 };
 
+/**
+ *
+ */
 static ARRAY(g_dwarf_dies, struct dwarf_die_s, 1000);
 
+/**
+ * @brief debug_line_build_dwarf
+ * @param fd
+ * @param offset
+ * @return
+ */
 static int debug_line_build_dwarf(int fd, size_t offset)
 {
 	int count = 0;
@@ -186,6 +220,13 @@ static int debug_line_build_dwarf(int fd, size_t offset)
 	return count;
 }
 
+/**
+ * @brief debug_line_search_dwdie
+ * @param dd
+ * @param address
+ * @param lineno
+ * @return
+ */
 static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 		uintptr_t address, int *lineno)
 {
@@ -221,6 +262,13 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 }
 #endif
 
+/**
+ * @brief debug_line_build_file
+ * @param path
+ * @param start
+ * @param end
+ * @return
+ */
 static int debug_line_build_file(const char *path, size_t start, size_t end)
 {
 	int fd = open(path, O_RDONLY);
@@ -245,6 +293,12 @@ static int debug_line_build_file(const char *path, size_t start, size_t end)
 	return count;
 }
 
+/**
+ * @brief dwarf_die_cmp
+ * @param a
+ * @param b
+ * @return
+ */
 static int dwarf_die_cmp(const void *a, const void *b)
 {
 	const struct dwarf_die_s *dda = a;

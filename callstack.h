@@ -7,6 +7,9 @@
 
 #define BACKTRACE_MAX 50
 
+/**
+ * @brief The callstack_s struct
+ */
 struct callstack_s {
 	int		id;
 
@@ -22,8 +25,21 @@ struct callstack_s {
 	unw_word_t	ips[0];
 };
 
+/**
+ * @brief callstack_current
+ * @return
+ */
 struct callstack_s *callstack_current(void);
+
+/**
+ * @brief callstack_print
+ * @param cs
+ */
 void callstack_print(struct callstack_s *cs);
+
+/**
+ * @brief callstack_report
+ */
 void callstack_report(void);
 
 #endif

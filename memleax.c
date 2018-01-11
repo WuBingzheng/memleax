@@ -32,10 +32,20 @@ pid_t g_current_thread;
 int opt_backtrace_limit = BACKTRACE_MAX;
 const char *opt_debug_info_file;
 
+/**
+ * @brief g_target_pid
+ */
 static pid_t g_target_pid;
+
+/**
+ * @brief g_signo
+ */
 static int g_signo = 0;
 
-
+/**
+ * @brief signal_handler
+ * @param signo
+ */
 static void signal_handler(int signo)
 {
 	g_signo = signo;

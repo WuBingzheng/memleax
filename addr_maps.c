@@ -13,14 +13,25 @@
 #include "proc_info.h"
 #include "array.h"
 
-
+/**
+ * @brief The addr_map_s struct
+ */
 struct addr_map_s {
 	uintptr_t	start, end;
 	char		name[100];
 };
 
+/**
+ *
+ */
 static ARRAY(g_addr_maps, struct addr_map_s, 50);
 
+/**
+ * @brief addr_maps_build_file
+ * @param path
+ * @param start
+ * @param end
+ */
 static void addr_maps_build_file(const char *path, size_t start, size_t end)
 {
 	struct addr_map_s *am = array_push(&g_addr_maps);

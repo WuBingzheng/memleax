@@ -19,6 +19,9 @@
 #include "memleax.h"
 #include "memblock.h"
 
+/**
+ * @brief g_callstack_hash
+ */
 static struct hlist_head g_callstack_hash[HASH_SIZE];
 
 struct callstack_s *callstack_current(void)
@@ -81,6 +84,12 @@ void callstack_print(struct callstack_s *cs)
 	}
 }
 
+/**
+ * @brief callstack_cmp
+ * @param a
+ * @param b
+ * @return
+ */
 static int callstack_cmp(const void *a, const void *b)
 {
 	const struct callstack_s *csa = *(const struct callstack_s **)a;

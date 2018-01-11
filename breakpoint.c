@@ -19,8 +19,18 @@
 #include "symtab.h"
 #include "memleax.h"
 
+/**
+ * @brief g_breakpoints
+ */
 struct breakpoint_s g_breakpoints[4];
 
+/**
+ * @brief bph_malloc
+ * @param pointer
+ * @param size
+ * @param none
+ * @return
+ */
 static int bph_malloc(uintptr_t pointer, uintptr_t size, uintptr_t none)
 {
 	log_debug("-- malloc size:%ld ret:%lx\n", size, pointer);
@@ -28,6 +38,13 @@ static int bph_malloc(uintptr_t pointer, uintptr_t size, uintptr_t none)
 	return memblock_new(pointer, size);
 }
 
+/**
+ * @brief bph_free
+ * @param none1
+ * @param pointer
+ * @param none2
+ * @return
+ */
 static int bph_free(uintptr_t none1, uintptr_t pointer, uintptr_t none2)
 {
 	log_debug("-- free point:%lx\n", pointer);
@@ -36,6 +53,13 @@ static int bph_free(uintptr_t none1, uintptr_t pointer, uintptr_t none2)
 	return 0;
 }
 
+/**
+ * @brief bph_realloc
+ * @param new_pointer
+ * @param old_pointer
+ * @param size
+ * @return
+ */
 static int bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t size)
 {
 	log_debug("-- realloc pointer:%lx->%lx size:%ld\n", old_pointer, new_pointer, size);
@@ -49,6 +73,13 @@ static int bph_realloc(uintptr_t new_pointer, uintptr_t old_pointer, uintptr_t s
 	}
 }
 
+/**
+ * @brief bph_calloc
+ * @param pointer
+ * @param nmemb
+ * @param size
+ * @return
+ */
 static int bph_calloc(uintptr_t pointer, uintptr_t nmemb, uintptr_t size)
 {
 	log_debug("-- calloc pointer:%lx nmemb:%ld size:%ld\n", pointer, nmemb, size);
@@ -56,7 +87,13 @@ static int bph_calloc(uintptr_t pointer, uintptr_t nmemb, uintptr_t size)
 	return memblock_new(pointer, nmemb * size);
 }
 
-
+/**
+ * @brief do_breakpoint_init
+ * @param pid
+ * @param bp
+ * @param name
+ * @param handler
+ */
 static void do_breakpoint_init(pid_t pid, struct breakpoint_s *bp,
 		const char *name, bp_handler_f handler)
 {
