@@ -10,10 +10,10 @@
 struct callstack_s {
 	int		id;
 
-	int		alloc_count, free_count;
-	int		expired_count, free_expired_count;
-	int		alloc_size, free_size;
-	int		expired_size, free_expired_size;
+    size_t		alloc_count, free_count;
+    size_t		expired_count, free_expired_count;
+    size_t		alloc_size, free_size;
+    size_t		expired_size, free_expired_size;
 	int		free_min, free_max, free_total;
 	int		unfree_max;
 

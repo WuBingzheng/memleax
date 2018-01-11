@@ -120,11 +120,11 @@ void callstack_report(void)
 	printf("== Callstack statistics: (in ascending order)\n\n");
 	array_for_each(csp, &callstacks) {
 		cs = *csp;
-		printf("CallStack[%d]: may-leak=%d (%d bytes)\n"
-				"    expired=%d (%d bytes), free_expired=%d (%d bytes)\n"
-				"    alloc=%d (%d bytes), free=%d (%d bytes)\n"
+                printf("CallStack[%d]: may-leak=%zu (%zu bytes)\n"
+                                "    expired=%zu (%zu bytes), free_expired=%zu (%zu bytes)\n"
+                                "    alloc=%zu (%zu bytes), free=%zu (%zu bytes)\n"
 				"    freed memory live time: min=%d max=%d average=%d\n"
-				"    un-freed memory live time: max=%d\n",
+                                "    un-freed memory live time: max=%d\n",
 				cs->id,
 				cs->expired_count - cs->free_expired_count,
 				cs->expired_size - cs->free_expired_size,
@@ -133,7 +133,7 @@ void callstack_report(void)
 				cs->alloc_count, cs->alloc_size,
 				cs->free_count, cs->free_size,
 				cs->free_min, cs->free_max,
-				cs->free_count ? cs->free_total / cs->free_count : 0,
+                                cs->free_count ? (int)(cs->free_total / cs->free_count) : 0,
 				cs->unfree_max);
 		callstack_print(cs);
 		printf("\n");
