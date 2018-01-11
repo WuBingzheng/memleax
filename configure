@@ -135,10 +135,10 @@ fi
 # - check libdwarf
 if ! $disable_dwarf; then
 	if check_lib libdw libdw.h "dwarf_begin(0,0)" "-I/usr/include/elfutils" "-ldw"; then
-		CFLAGS="$CFLAGS -DMLX_WITH_LIBDW -I/usr/include/elfutils/"
+		CFLAGS="$CFLAGS -DMLX_WITH_LIBDW -I/usr/include/"
 		LDLIBS="$LDLIBS -ldw"
 	elif check_lib libdwarf libdwarf.h "dwarf_init(0,0,0,0,NULL,NULL)" "-I/usr/include/libdwarf" "-ldwarf"; then
-		CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/include/libdwarf/"
+		CFLAGS="$CFLAGS -DMLX_WITH_LIBDWARF -I/usr/include/"
 		LDLIBS="$LDLIBS -ldwarf"
 	else
 		echo "Error: libdw or libdwarf is required."
