@@ -126,24 +126,26 @@ static void _ptr_unw_proc_info_copy(unw_proc_info_t *d, unw_proc_info_t *s,
 static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_info_t *pi,
 		int need_unwind_info, void *arg)
 {
-	static struct hlist_head ip_info_hash[HASH_SIZE];
+	static LIST_HEAD(ip_info_cache);
 	struct ip_info_s {
-		struct hlist_node	hash_node;
+		struct list_head	list_node;
 		unw_word_t		ip;
 		unw_proc_info_t		pi;
 		int			ret;
 	};
 
 	/* search the cache */
-	struct hlist_node *p = hash_search(ip_info_hash, &ip, sizeof(ip));
-	if (p != NULL) {
-		struct ip_info_s *ii = list_entry(p, struct ip_info_s, hash_node);
-		if (ii->ret < 0) return ii->ret;
-
-		_ptr_unw_proc_info_copy(pi, &ii->pi, 0);
+	struct list_head *p;
+	list_for_each(p, &ip_info_cache) {
+		struct ip_info_s *ii = list_entry(p, struct ip_info_s, list_node);
+		if(ii->ret >= 0)
+		{
+			_ptr_unw_proc_info_copy(pi, &ii->pi, 0);
+		}
 		return ii->ret;
 	}
 
+	/* not found. create new. */
 	struct ip_info_s *ii = malloc(sizeof(struct ip_info_s));
 	ii->ip = ip;
 
@@ -152,7 +154,7 @@ static int _ptr_find_proc_info (unw_addr_space_t as, unw_word_t ip, unw_proc_inf
 	if (ii->ret >= 0) { /* add to cache if success */
 		_ptr_unw_proc_info_copy(&ii->pi, pi, 1);
 	}
-	hash_add(ip_info_hash, &ii->hash_node, sizeof(ip));
+	list_add(&(ii->list_node), &ip_info_cache);
 	return ii->ret;
 }
 
