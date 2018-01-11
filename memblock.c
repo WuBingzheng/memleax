@@ -130,7 +130,7 @@ static void memblock_expire_one(struct memblock_s *mb)
 				cs->id, mb->size);
 		callstack_print(cs);
 	} else if (cs->free_expired_count < DONOT_SHOW_AFTER_FREE_EXPIRES) {
-		printf("CallStack[%d]: memory expires with %zd bytes, %d times again\n",
+                printf("CallStack[%d]: memory expires with %zd bytes, %zu times again\n",
 				cs->id, mb->size, cs->expired_count);
 	}
 }
