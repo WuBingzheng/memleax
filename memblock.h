@@ -13,5 +13,6 @@ void memblock_update_size(struct memblock_s *mb, size_t size);
 struct memblock_s *memblock_search(uintptr_t pointer);
 int memblock_expire(time_t expire, int memblock_limit, int callstack_limit);
 void memblock_count(void);
+void memblock_dump_expire(struct callstack_s *cs);
 
 #endif

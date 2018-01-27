@@ -101,6 +101,21 @@ void memblock_update_size(struct memblock_s *mb, size_t size)
 	}
 }
 
+
+void memblock_dump_expire(struct callstack_s *cs)
+{
+	struct list_head *p, *safe;
+	struct memblock_s *mb;
+	list_for_each_safe(p, safe, &g_memblock_expire) {
+		mb = list_entry(p, struct memblock_s, list_node);
+		if (mb->callstack == cs) {
+			printf("    pointer %p (size %d)\n",
+					(void *)mb->pointer,
+					mb->size);
+		}
+	}
+}
+
 struct memblock_s *memblock_search(uintptr_t pointer)
 {
 	struct hlist_node *p = hash_search(g_memblock_hash,
