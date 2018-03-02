@@ -6,14 +6,18 @@ without recompiling or restarting.
 
 ## status
 
-Stable and completed.
-
-`memleax` is a tool with single and clear aim. There is
-no known bug to fix and no new feature to add by now.
-
-However if you get any new feature or bug, please report
+Because the debugging work depends on CPU architecture and OS heavily,
+and I test `memleax` only on several programs, and it is not used widely
+by now. So there must be bugs. If you get one, please report
 to [GitHub](https://github.com/WuBingzheng/memleax),
 or [mail to me](mailto:wubingzheng@gmail.com).
+
+`memleax` is a tool with single and clear aim. I am not going to add new feature on it.
+However if you have any ideas, please contact me.
+
+KNOWN BUGS:
+
+- `memleax` may crash the target program on detaching, if the program is multi-thread. I will fix it later.
 
 
 ## how it works
