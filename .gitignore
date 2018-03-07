@@ -2,3 +2,7 @@
 *.tar.gz
 memleax
 Makefile
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeLists.txt.user

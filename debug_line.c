@@ -25,7 +25,7 @@
 #include "debug_file.h"
 
 #if defined(MLX_WITH_LIBDW) /* MLX_WITH_LIBDW */
-#include <libdw.h>
+#include <elfutils/libdw.h>
 struct dwarf_die_s {
 	Dwarf_Addr	start;
 	Dwarf_Addr	end;
@@ -114,7 +114,7 @@ static const char *debug_line_search_dwdie(struct dwarf_die_s *dd,
 #else
 /* MLX_WITH_LIBDWARF */
 
-#include <libdwarf.h>
+#include <libdwarf/libdwarf.h>
 struct dwarf_die_s {
 	Dwarf_Addr	start;
 	Dwarf_Addr	end;
