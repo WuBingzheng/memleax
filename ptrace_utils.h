@@ -25,7 +25,7 @@ typedef struct user_regs_struct registers_info_t;
 
 static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 {
-#ifdef PTRACE_GETREGS
+#if defined PTRACE_GETREGS || defined PT_GETREGS
 	ptrace(PTRACE_GETREGS, pid, 0, regs);
 #else
 	long regset = NT_PRSTATUS;
@@ -37,7 +37,7 @@ static inline void ptrace_get_regs(pid_t pid, registers_info_t *regs)
 }
 static inline void ptrace_set_regs(pid_t pid, registers_info_t *regs)
 {
-#ifdef PTRACE_GETREGS
+#if defined PTRACE_GETREGS || defined PT_GETREGS
 	ptrace(PTRACE_SETREGS, pid, 0, regs);
 #else
 	long regset = NT_PRSTATUS;
