@@ -17,8 +17,12 @@ However if you have any ideas, please contact me.
 
 KNOWN BUGS:
 
-- `memleax` may crash the target program on detaching, if the program is multi-thread.
-  I can not figure out how to detach multi-thread process. Any help?
+- for multi-thread target program, `memleax` may miss some breakpoints, leading
+  to wrong result. [ISSUE](https://github.com/WuBingzheng/memleax/issues/38)
+- for multi-thread target program, `memleax` may crash it on detaching.
+  [ISSUE](https://github.com/WuBingzheng/memleax/issues/39)
+
+Any help is welcomed.
 
 
 ## how it works
