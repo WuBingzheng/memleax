@@ -51,3 +51,6 @@ else()
     message(WARNING "Could not find libdw or libdwarf. File name and line number will not be shown in backtrace.")
   endif()
 endif()
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+install(FILES memleax.1 DESTINATION share/man/man1/)
