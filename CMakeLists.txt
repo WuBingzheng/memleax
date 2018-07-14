@@ -23,7 +23,7 @@ add_executable(
   symtab.c
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE -g -Wall -DMLX_X86_64)
+target_compile_options(${PROJECT_NAME} PRIVATE -g -Wall)
 if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
   target_compile_options(${PROJECT_NAME} PRIVATE -DMLX_LINUX)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL FreeBSD)
@@ -31,6 +31,28 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL FreeBSD)
   target_link_libraries(${PROJECT_NAME} PRIVATE procstat util z)
 else()
   message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}. Only GNU/Linux and FreeBSD are supported.")
+endif()
+
+execute_process(COMMAND uname -m
+  RESULT_VARIABLE UNAME_RES OUTPUT_VARIABLE
+  UNAME_OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (UNAME_RES)
+  message(FATAL_ERROR "Error running uname, result: ${UNAME_RES}")
+endif()
+if (UNAME_OUT STREQUAL "x86" OR UNAME_OUT STREQUAL "i386" OR UNAME_OUT STREQUAL "i686")
+  target_compile_options(${PROJECT_NAME} PRIVATE -DMLX_X86)
+  target_link_libraries(${PROJECT_NAME} PRIVATE unwind-x86)
+elseif (UNAME_OUT STREQUAL "x86_64" OR UNAME_OUT STREQUAL "amd64")
+  target_compile_options(${PROJECT_NAME} PRIVATE -DMLX_X86_64)
+  target_link_libraries(${PROJECT_NAME} PRIVATE unwind-x86_64)
+elseif (UNAME_OUT MATCHES "armv7.*")
+  target_compile_options(${PROJECT_NAME} PRIVATE -DMLX_ARMv7)
+  target_link_libraries(${PROJECT_NAME} PRIVATE unwind-arm)
+elseif (UNAME_OUT STREQUAL "aarch64")
+  target_compile_options(${PROJECT_NAME} PRIVATE -DMLX_AARCH64)
+  target_link_libraries(${PROJECT_NAME} PRIVATE unwind-aarch64)
+else ()
+  message(FATAL_ERROR "Unsupported machine type: ${UNAME_OUT}")
 endif()
 
 pkg_search_module(LIBUNWIND REQUIRED libunwind-ptrace)
