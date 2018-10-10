@@ -25,6 +25,10 @@ KNOWN BUGS:
 Any help is welcomed.
 
 
+NOTE: I write a new tool [`libleak`](https://github.com/WuBingzheng/libleak) to delete
+memory leak. It works by hooking memory functions (e.g. `malloc`) by LD_PRELOAD.
+Compared with `memleax`, it has much less impact on performance.
+
 ## how it works
 
 `memleax` debugs memory leak of a running process by attaching it.
