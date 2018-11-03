@@ -117,6 +117,7 @@ install `libdwarf` by `pkg`, and must not install `libelf` by `pkg`.
 After all required libraries are installed, run
 
     $ mkdir build
+    $ cd build
     $ cmake ..
     $ make
     $ sudo make install
