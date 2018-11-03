@@ -8,26 +8,17 @@ without recompiling or restarting.
 
 Because the debugging work depends on CPU architecture and OS heavily,
 and I test `memleax` only on several programs, and it is not used widely
-by now. So there must be bugs. If you get one, please report
-to [GitHub](https://github.com/WuBingzheng/memleax),
-or [mail to me](mailto:wubingzheng@gmail.com).
+by now. So there must be bugs.
 
-`memleax` is a tool with single and clear aim. I am not going to add new feature on it.
-However if you have any ideas, please contact me.
-
-KNOWN BUGS:
-
-- for multi-thread target program, `memleax` may miss some breakpoints, leading
-  to wrong result. [ISSUE](https://github.com/WuBingzheng/memleax/issues/38)
-- for multi-thread target program, `memleax` may crash it on detaching.
-  [ISSUE](https://github.com/WuBingzheng/memleax/issues/39)
-
-Any help is welcomed.
+Some known bugs for debugging multi-thread program,
+[#38](https://github.com/WuBingzheng/memleax/issues/38) and
+[#39](https://github.com/WuBingzheng/memleax/issues/39).
 
 
-NOTE: I write a new tool [`libleak`](https://github.com/WuBingzheng/libleak) to delete
-memory leak. It works by hooking memory functions (e.g. `malloc`) by LD_PRELOAD.
-Compared with `memleax`, it has much less impact on performance.
+Besides, I write a new tool [`libleak`](https://github.com/WuBingzheng/libleak),
+which works by hooking memory functions by LD_PRELOAD.
+It's much simpler and has much less impact on performance.
+__So I am not going to improve `memleax`__. Try `libleak` please.
 
 ## how it works
 
